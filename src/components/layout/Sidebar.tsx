@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { LocalAIAssistant } from "../UI/LocalAIAssistant";
+import { NeonButton2025 } from "../UI/NeonButton2025";
 
 interface NavigationItem {
   path: string;
@@ -58,6 +60,7 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -343,6 +346,20 @@ export const Sidebar: React.FC = () => {
                 <span className="text-green-400 font-medium">متصل</span>
               </div>
             </div>
+
+            {/* AI Assistant Button */}
+            <div className="pt-3 border-t border-white/10">
+              <NeonButton2025
+                variant="quantum"
+                size="sm"
+                onClick={() => setIsAIAssistantOpen(true)}
+                pulse
+                className="w-full text-sm"
+              >
+                <span className="mr-2">🧠</span>
+                المساعد الذكي
+              </NeonButton2025>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -371,6 +388,12 @@ export const Sidebar: React.FC = () => {
           />
         ))}
       </div>
+
+      {/* Local AI Assistant */}
+      <LocalAIAssistant
+        isOpen={isAIAssistantOpen}
+        onClose={() => setIsAIAssistantOpen(false)}
+      />
     </motion.div>
   );
 };
