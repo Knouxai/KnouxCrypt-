@@ -1,320 +1,300 @@
-import React, { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useSecurity } from "../../context/SecurityContext";
-
-interface ChatMessage {
-  id: string;
-  type: "user" | "ai";
-  content: string;
-  timestamp: Date;
-  suggestions?: string[];
-}
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { LocalAIAssistant } from "../UI/LocalAIAssistant";
+import { ModernCard } from "../UI/ModernCard";
+import { NeonButton2025 } from "../UI/NeonButton2025";
 
 export const AIAssistant: React.FC = () => {
-  const { aiRecommendations, aiAnalysisForDisk } = useSecurity();
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [isAIOpen, setIsAIOpen] = useState(false);
+
+  const features = [
     {
-      id: "1",
-      type: "ai",
-      content:
-        "مرحباً! أنا مساعدك الذكي للتشفير. يمكنني مساعدتك في:\n\n• تحليل الأقراص وتقديم توصيات التشفير\n• اختيار أفضل خوارزميات التشفير\n• تقييم قوة كلمات المرور\n• توفير نصائح الأمان\n\nكيف يمكنن�� مساعدتك اليوم؟",
-      timestamp: new Date(),
-      suggestions: [
-        "تحليل أقراصي",
-        "ما هي أفضل خوارزمية تشفير؟",
-        "كيف أنشئ كلمة مرور قوية؟",
-        "نصائح للأمان",
-      ],
+      icon: "🧠",
+      title: "ذكاء اصطناعي محلي",
+      description: "يعمل بالكامل على جهازك بدون إرسال بيانات خارجية",
+      color: "#6366F1",
     },
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+    {
+      icon: "🔒",
+      title: "خصوصية مطلقة",
+      description: "لا توجد اتصالات خارجية - بياناتك تبقى آمنة",
+      color: "#10B981",
+    },
+    {
+      icon: "⚡",
+      title: "استجابة فورية",
+      description: "إجابات سريعة ودقيقة حول التشفير والأمان",
+      color: "#F59E0B",
+    },
+    {
+      icon: "📚",
+      title: "قاعدة معرفة شاملة",
+      description: "معلومات متخصصة في خوارزميات التشفير المتقدمة",
+      color: "#8B5CF6",
+    },
+  ];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSendMessage = async (message: string) => {
-    if (!message.trim()) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      type: "user",
-      content: message,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage("");
-    setIsTyping(true);
-
-    // محاكاة رد الـ AI
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(message);
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: aiResponse.content,
-        timestamp: new Date(),
-        suggestions: aiResponse.suggestions,
-      };
-
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 1500);
-  };
-
-  const generateAIResponse = (
-    userMessage: string,
-  ): { content: string; suggestions?: string[] } => {
-    const lowerMessage = userMessage.toLowerCase();
-
-    if (lowerMessage.includes("تحليل") || lowerMessage.includes("أقراص")) {
-      return {
-        content:
-          "سأقوم بتحليل أقراصك الآن...\n\n🔍 **نتائج التحليل:**\n\n• **القرص C:** SSD - يُنصح بـ AES-256\n• **القرص D:** HDD - يُنصح بـ Serpent للأمان الإضافي\n• **USB المتصل:** يُنصح بتشفير VeraCrypt\n\n💡 **التوصيات:**\n- استخدم كلمة مرور قوية (12+ حرف)\n- فعّل النسخ الاحتياطي المشفر\n- أنشئ مجلد مخفي للملفات الحساسة",
-        suggestions: [
-          "كيف أنشئ كلمة مرور قوية؟",
-          "ما هو الفرق بين AES و Serpent؟",
-          "كيف أنشئ مجلد مخفي؟",
-        ],
-      };
-    }
-
-    if (lowerMessage.includes("خوارزمية") || lowerMessage.includes("أفضل")) {
-      return {
-        content:
-          "🔐 **أفضل خوارزميات التشفي��:**\n\n• **AES-256:** الأكثر توازناً (أداء + أمان)\n• **Serpent:** أمان إضافي مع أداء متوسط\n• **Twofish:** سرعة عالية مع أمان جيد\n• **AES-Serpent-Twofish:** الحماية القصوى\n\n**توصيتي:** ابدأ بـ AES-256 للاستخدام العام، واستخدم Serpent للبيانات الحساسة جداً.",
-        suggestions: [
-          "ما هي مواصفات AES-256؟",
-          "متى أستخدم التشفير الثلاثي؟",
-          "كيف أختار الخوارزمية المناسبة؟",
-        ],
-      };
-    }
-
-    if (
-      lowerMessage.includes("كلمة مرور") ||
-      lowerMessage.includes("password")
-    ) {
-      return {
-        content:
-          "🔑 **دليل كلمات المرور القوية:**\n\n**المعايير الأساسية:**\n• 12+ حرف على الأقل\n• أحرف كبيرة وصغيرة\n• أرقام ورموز خاصة\n• تجنب الكلمات المعروفة\n\n**أمثلة قوية:**\n• `My$ecur3Pa$$w0rd2024!`\n• `Crypto#Is&Secure789`\n\n**نصائح إضافية:**\n• استخدم مدير كلمات مرور\n• فعّل المصادقة الثنائية\n• غيّر كلمات المرور دورياً",
-        suggestions: [
-          "كيف أختبر قوة كلمة المرور؟",
-          "ما هو أفضل مدير كلمات مرور؟",
-          "كيف أفعل المصادقة الثنائية؟",
-        ],
-      };
-    }
-
-    if (lowerMessage.includes("نصائح") || lowerMessage.includes("أمان")) {
-      return {
-        content:
-          "🛡️ **نصائح الأمان المتقدمة:**\n\n**1. طبقات الحماية:**\n• تشفير القرص الكامل\n• مجلدات مخفية للملفات الحساسة\n• نسخ احتياطية مشفرة\n\n**2. السلوكيات الآمنة:**\n• تحديثات النظام المنتظمة\n• تجنب الواي فاي العام للمعاملات الحساسة\n• فحص البرامج قبل التثبيت\n\n**3. التكنولوجيا:**\n• استخدم VPN موثوق\n• فعّل جدار الحماية\n• استخدم برامج مكافحة البرمجيات الخبيثة",
-        suggestions: [
-          "كيف أنشئ نسخة احتياطية مشفرة؟",
-          "ما هو أفضل VPN؟",
-          "كيف أتحقق من أمان شبكتي؟",
-        ],
-      };
-    }
-
-    // رد افتراضي
-    return {
-      content:
-        "أفهم سؤالك، ولكنني متخصص في مجال التشفير والأمان السيبراني. يمكنني مساعدتك في:\n\n• تحليل وتشفير الأقراص\n• اختيار خوارزميات التشفير\n• تقوية كلمات المرور\n• نصائح الأمان الرقمي\n\nهل تريد معرفة المزيد عن أي من هذه المواضيع؟",
-      suggestions: [
-        "تحليل أقراصي",
-        "أفضل خوارزميات التشفير",
-        "كيف أنشئ كلمة مرور قوية؟",
-        "نصائح الأمان",
-      ],
-    };
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    handleSendMessage(suggestion);
-  };
+  const expertiseAreas = [
+    {
+      category: "خوارزميات التشفير",
+      topics: ["AES-256", "Serpent", "Twofish", "التشفير الثلاثي"],
+      icon: "🔐",
+    },
+    {
+      category: "أمان كلمات المرور",
+      topics: ["إنشاء كلمات مرور قوية", "إدارة المفاتيح", "المصادقة الثنائية"],
+      icon: "🔑",
+    },
+    {
+      category: "حماية البيانات",
+      topics: ["تشفير الملفات", "تأمين الأقراص", "النسخ الاحتياطية الآمنة"],
+      icon: "🛡️",
+    },
+    {
+      category: "أفضل الممارسات",
+      topics: ["سياسات الأمان", "كشف التهديدات", "الاستجابة للحوادث"],
+      icon: "⚔️",
+    },
+  ];
 
   return (
     <div className="page-container">
+      {/* Enhanced Header */}
       <motion.div
-        className="page-header"
+        className="relative overflow-hidden rounded-3xl mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.8 }}
       >
-        <h1>المساعد الذكي للتشفير</h1>
-        <p>مساعد AI متخصص في التشفير والأمان السيبراني</p>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-blue-600/20 backdrop-blur-sm" />
+        <div className="relative p-8 text-center">
+          <motion.div
+            className="text-6xl mb-4"
+            animate={{
+              rotate: [0, 10, -10, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            🧠
+          </motion.div>
+          <motion.h1
+            className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent mb-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            المساعد الذكي المحلي
+          </motion.h1>
+          <motion.p
+            className="text-xl text-gray-300 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            ذكاء اصطناعي متخصص في التشفير يعمل بالكامل على جهازك
+          </motion.p>
+          <motion.div
+            className="flex justify-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-medium">
+              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse inline-block" />
+              خصوصية مطلقة
+            </div>
+            <div className="px-4 py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium">
+              محلي وآمن
+            </div>
+          </motion.div>
+        </div>
       </motion.div>
 
-      <div className="ai-assistant-content">
-        {/* Chat Container */}
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        {/* Launch Assistant */}
         <motion.div
-          className="glass-card chat-container"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-1"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
         >
-          <div className="chat-header">
-            <div className="ai-avatar">🧠</div>
-            <div className="ai-info">
-              <h3>KnouxCrypt AI</h3>
-              <span className="status online">متصل ونشط</span>
-            </div>
-            <button
-              className="analyze-btn"
-              onClick={() => {
-                // For now, just show a message - would need selectedDisk to actually run analysis
-                console.log("AI analysis would run here with selected disk");
+          <ModernCard
+            variant="gradient"
+            glow
+            className="text-center h-full flex flex-col justify-center"
+          >
+            <motion.div
+              className="text-8xl mb-6"
+              animate={{
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0],
               }}
-              disabled={false}
-            >
-              🔍 تحليل سريع
-            </button>
-          </div>
-
-          <div className="chat-messages">
-            <AnimatePresence>
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  className={`message ${message.type}`}
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="message-avatar">
-                    {message.type === "ai" ? "🧠" : "👤"}
-                  </div>
-                  <div className="message-content">
-                    <div className="message-text">
-                      {message.content.split("\n").map((line, index) => (
-                        <React.Fragment key={index}>
-                          {line}
-                          {index < message.content.split("\n").length - 1 && (
-                            <br />
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </div>
-                    <div className="message-time">
-                      {message.timestamp.toLocaleTimeString("ar", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                    {message.suggestions && (
-                      <div className="message-suggestions">
-                        {message.suggestions.map((suggestion, index) => (
-                          <button
-                            key={index}
-                            className="suggestion-chip"
-                            onClick={() => handleSuggestionClick(suggestion)}
-                          >
-                            {suggestion}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {isTyping && (
-              <motion.div
-                className="message ai typing"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="message-avatar">🧠</div>
-                <div className="message-content">
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="chat-input">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage(inputMessage);
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
               }}
             >
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="اكتب سؤالك عن التشفير والأمان..."
-                disabled={isTyping}
-              />
-              <button
-                type="submit"
-                disabled={!inputMessage.trim() || isTyping}
-                className="send-btn"
-              >
-                ↵
-              </button>
-            </form>
-          </div>
+              🚀
+            </motion.div>
+            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              ابدأ المحادثة
+            </h2>
+            <p className="text-gray-300 mb-6 leading-relaxed">
+              اسأل أي سؤال حول التشفير والأمان واحصل على إجابات دقيقة ومتخصصة من
+              المساعد الذكي المحلي
+            </p>
+            <NeonButton2025
+              variant="quantum"
+              size="lg"
+              onClick={() => setIsAIOpen(true)}
+              pulse
+              className="w-full"
+            >
+              <span className="mr-2">🧠</span>
+              فتح المساعد الذكي
+            </NeonButton2025>
+          </ModernCard>
         </motion.div>
 
-        {/* AI Capabilities */}
+        {/* Features */}
         <motion.div
-          className="glass-card capabilities-card"
+          className="lg:col-span-2"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          transition={{ delay: 0.4 }}
         >
-          <h3>قدرات المساعد الذكي</h3>
-          <div className="capabilities-list">
-            <div className="capability-item">
-              <div className="capability-icon">🔍</div>
-              <div className="capability-info">
-                <h4>تحليل الأقراص</h4>
-                <p>فحص ذكي للأقراص وتقديم توصيات مخصصة</p>
-              </div>
+          <ModernCard variant="hologram">
+            <h3 className="text-2xl font-bold mb-6 text-center bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+              ✨ المميزات الفريدة
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">{feature.icon}</span>
+                    <h4 className="font-semibold text-white">
+                      {feature.title}
+                    </h4>
+                  </div>
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    {feature.description}
+                  </p>
+                </motion.div>
+              ))}
             </div>
-            <div className="capability-item">
-              <div className="capability-icon">🎯</div>
-              <div className="capability-info">
-                <h4>اختيار الخوارزميات</h4>
-                <p>توصيات مبنية على نوع البيانات والاستخدام</p>
-              </div>
-            </div>
-            <div className="capability-item">
-              <div className="capability-icon">🔑</div>
-              <div className="capability-info">
-                <h4>تقييم كلمات المرور</h4>
-                <p>فحص قوة كلمات المرور وتقديم تحسينات</p>
-              </div>
-            </div>
-            <div className="capability-item">
-              <div className="capability-icon">🛡️</div>
-              <div className="capability-info">
-                <h4>استشارات الأمان</h4>
-                <p>نصائح متقدمة لحماية البيانات والخصوصية</p>
-              </div>
-            </div>
-          </div>
+          </ModernCard>
         </motion.div>
       </div>
+
+      {/* Expertise Areas */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+      >
+        <h3 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          🎯 مجالات الخبرة
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {expertiseAreas.map((area, index) => (
+            <ModernCard
+              key={area.category}
+              variant="gradient"
+              delay={0.7 + index * 0.1}
+              className="text-center"
+            >
+              <motion.div
+                className="text-4xl mb-4"
+                whileHover={{ scale: 1.2, rotate: 10 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {area.icon}
+              </motion.div>
+              <h4 className="text-lg font-bold text-white mb-3">
+                {area.category}
+              </h4>
+              <div className="space-y-2">
+                {area.topics.map((topic, topicIndex) => (
+                  <motion.div
+                    key={topicIndex}
+                    className="text-sm text-gray-300 py-1 px-3 rounded-lg bg-white/5 border border-white/10"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{
+                      delay: 0.8 + index * 0.1 + topicIndex * 0.05,
+                    }}
+                  >
+                    {topic}
+                  </motion.div>
+                ))}
+              </div>
+            </ModernCard>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Quick Start Guide */}
+      <motion.div
+        className="mt-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+      >
+        <ModernCard variant="neon">
+          <h3 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            🚀 دليل البدء السريع
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="p-4 rounded-xl bg-white/5 border border-white/10"
+            >
+              <div className="text-3xl mb-3">1️⃣</div>
+              <h4 className="font-semibold text-white mb-2">افتح المساعد</h4>
+              <p className="text-sm text-gray-300">
+                اضغط على زر "فتح المساعد الذكي" أو الزر في الشريط الجانبي
+              </p>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="p-4 rounded-xl bg-white/5 border border-white/10"
+            >
+              <div className="text-3xl mb-3">2️⃣</div>
+              <h4 className="font-semibold text-white mb-2">اسأل سؤالك</h4>
+              <p className="text-sm text-gray-300">
+                اكتب أي سؤال حول التشفير أو الأمان أو استخدم الأسئلة السريعة
+              </p>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="p-4 rounded-xl bg-white/5 border border-white/10"
+            >
+              <div className="text-3xl mb-3">3️⃣</div>
+              <h4 className="font-semibold text-white mb-2">احصل على إجابة</h4>
+              <p className="text-sm text-gray-300">
+                ستحصل على إجابة مفصلة ودقيقة من قاعدة المعرفة المحلية
+              </p>
+            </motion.div>
+          </div>
+        </ModernCard>
+      </motion.div>
+
+      {/* Local AI Assistant Component */}
+      <LocalAIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
     </div>
   );
 };
