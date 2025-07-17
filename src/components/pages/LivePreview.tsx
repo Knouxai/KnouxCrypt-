@@ -132,7 +132,7 @@ const LivePreview: React.FC = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.2 }}
                   >
-                    خدمات النظام
+                    خد��ات النظام
                   </motion.h2>
                 )}
                 <button
@@ -481,7 +481,14 @@ const LivePreview: React.FC = () => {
                             repeatType: "reverse",
                           }}
                         >
-                          {currentService.type === "encryption" ? "🔐" : "🔍"}
+                          {[
+                            "aes-cipher",
+                            "serpent-cipher",
+                            "twofish-cipher",
+                            "triple-cipher",
+                          ].includes(currentService.id)
+                            ? "🔐"
+                            : "🔍"}
                         </motion.div>
 
                         <div>
@@ -489,13 +496,36 @@ const LivePreview: React.FC = () => {
                             {currentService.name}
                           </h3>
                           <p className="text-gray-300 text-lg">
-                            {currentService.description}
+                            حالة الخدمة: {getStatusText(currentService.status)}{" "}
+                            | وقت التشغيل: {formatUptime(currentService.uptime)}
                           </p>
                         </div>
 
                         {/* Live Activity Visualization */}
                         <div className="grid grid-cols-3 gap-6 mt-8">
-                          {currentService.metrics.map((metric, index) => (
+                          {[
+                            {
+                              name: "CPU",
+                              value: currentService.cpu,
+                              unit: "%",
+                              color: "#3B82F6",
+                              max: 100,
+                            },
+                            {
+                              name: "الذاكرة",
+                              value: currentService.memory,
+                              unit: "%",
+                              color: "#8B5CF6",
+                              max: 100,
+                            },
+                            {
+                              name: "العمليات",
+                              value: currentService.operations,
+                              unit: "/s",
+                              color: "#10B981",
+                              max: 3000,
+                            },
+                          ].map((metric, index) => (
                             <motion.div
                               key={metric.name}
                               className="bg-white/5 rounded-xl p-6 border border-white/10"
@@ -522,7 +552,9 @@ const LivePreview: React.FC = () => {
                                 <motion.div
                                   className="h-full rounded-full"
                                   style={{ backgroundColor: metric.color }}
-                                  animate={{ width: `${metric.value}%` }}
+                                  animate={{
+                                    width: `${Math.min((metric.value / metric.max) * 100, 100)}%`,
+                                  }}
                                   transition={{ duration: 1 }}
                                 />
                               </motion.div>
