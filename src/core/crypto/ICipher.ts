@@ -1,6 +1,6 @@
 /**
  * KnouxCrypt™ - Advanced Encryption Interface
- * واجهة التشفير الموحدة لجميع الخوارزميات
+ * واجهة التشفير الموحدة لجميع الخوا��زميات
  */
 
 import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
@@ -11,7 +11,7 @@ type BufferLike = BufferPolyfill | Uint8Array;
 export interface ICipher {
   /**
    * 🔐 تشفير البيانات
-   * @param data ال��يانات المراد تشفيرها (نص أو Buffer)
+   * @param data البيانات المراد تشفيرها (نص أو Buffer)
    * @returns البيانات المشفرة
    */
   encrypt(data: string | BufferLike): BufferLike;
@@ -303,10 +303,10 @@ export class SecureKeyGenerator {
    */
   static deriveKeyFromPassword(
     password: string,
-    salt: Buffer,
+    salt: BufferLike,
     iterations: number = 10000,
     keyLength: number = 32,
-  ): Buffer {
+  ): BufferLike {
     // تنفيذ PBKDF2 مبسط
     // في التطبيق الحقيقي، استخدم مكتبة مخصصة
     if (typeof require !== "undefined") {
