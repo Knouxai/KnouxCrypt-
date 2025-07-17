@@ -119,6 +119,14 @@ export const ModernSidebar: React.FC = () => {
           badge: "تجريبي",
           shortcut: "Ctrl+T",
         },
+        {
+          path: "/live-preview",
+          icon: "📺",
+          label: "المراقبة المباشرة",
+          description: "عرض مباشر للخدمات",
+          badge: "مباشر",
+          shortcut: "Ctrl+P",
+        },
       ],
     },
     {
