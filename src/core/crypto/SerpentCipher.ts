@@ -4,6 +4,10 @@
  */
 
 import { ICipher, CipherInfo, CipherError, CipherErrorCodes } from "./ICipher";
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
 
 export class SerpentCipher implements ICipher {
   public readonly blockSize = 16; // 128 bits
@@ -11,7 +15,7 @@ export class SerpentCipher implements ICipher {
   public readonly algorithmName = "Serpent-256";
   public readonly rounds = 32; // Serpent rounds
 
-  private readonly key: Buffer;
+  private readonly key: BufferLike;
   private readonly roundKeys: Uint32Array;
 
   // Serpent S-Boxes
@@ -57,7 +61,7 @@ export class SerpentCipher implements ICipher {
   // Linear transformation constants
   private static readonly PHI = 0x9e3779b9;
 
-  constructor(key: Buffer) {
+  constructor(key: BufferLike) {
     if (key.length !== this.keySize) {
       throw new CipherError(
         `🔑 المفتاح يجب أن يكون ${this.keySize} بايت (256 بت)، المعطى: ${key.length} بايت`,
@@ -66,20 +70,31 @@ export class SerpentCipher implements ICipher {
       );
     }
 
-    this.key = Buffer.from(key);
-    this.roundKeys = this.expandKey(key);
+    this.key = key instanceof BufferPolyfill ? key : createBuffer(key);
+    this.roundKeys = this.expandKey(this.key);
   }
 
-  encrypt(data: string | Buffer): Buffer {
+  encrypt(data: string | BufferLike): BufferLike {
     try {
-      const input = typeof data === "string" ? Buffer.from(data, "utf8") : data;
+      const input =
+        typeof data === "string" ? createBuffer(data, "utf8") : data;
       const paddedData = this.addPKCS7Padding(input);
-      const result = Buffer.alloc(paddedData.length);
+      const result = createBuffer(new Uint8Array(paddedData.length));
 
       for (let i = 0; i < paddedData.length; i += this.blockSize) {
-        const block = paddedData.slice(i, i + this.blockSize);
+        const paddedUint8 =
+          paddedData instanceof BufferPolyfill
+            ? paddedData.toUint8Array()
+            : paddedData;
+        const block = createBuffer(paddedUint8.slice(i, i + this.blockSize));
         const encryptedBlock = this.encryptBlock(block);
-        encryptedBlock.copy(result, i);
+        const encryptedUint8 =
+          encryptedBlock instanceof BufferPolyfill
+            ? encryptedBlock.toUint8Array()
+            : encryptedBlock;
+        const resultUint8 =
+          result instanceof BufferPolyfill ? result.toUint8Array() : result;
+        resultUint8.set(encryptedUint8, i);
       }
 
       return result;
@@ -92,18 +107,28 @@ export class SerpentCipher implements ICipher {
     }
   }
 
-  decrypt(encryptedData: Buffer): string {
+  decrypt(encryptedData: BufferLike): string | BufferLike {
     try {
       if (encryptedData.length % this.blockSize !== 0) {
         throw new Error("حجم البيانات المشفرة يجب أن يكون مضاعف لحجم البلوك");
       }
 
-      const result = Buffer.alloc(encryptedData.length);
+      const result = createBuffer(new Uint8Array(encryptedData.length));
 
       for (let i = 0; i < encryptedData.length; i += this.blockSize) {
-        const block = encryptedData.slice(i, i + this.blockSize);
+        const encryptedUint8 =
+          encryptedData instanceof BufferPolyfill
+            ? encryptedData.toUint8Array()
+            : encryptedData;
+        const block = createBuffer(encryptedUint8.slice(i, i + this.blockSize));
         const decryptedBlock = this.decryptBlock(block);
-        decryptedBlock.copy(result, i);
+        const decryptedUint8 =
+          decryptedBlock instanceof BufferPolyfill
+            ? decryptedBlock.toUint8Array()
+            : decryptedBlock;
+        const resultUint8 =
+          result instanceof BufferPolyfill ? result.toUint8Array() : result;
+        resultUint8.set(decryptedUint8, i);
       }
 
       const unpaddedData = this.removePKCS7Padding(result);
@@ -140,7 +165,7 @@ export class SerpentCipher implements ICipher {
       advantages: [
         "أمان استثنائي مع 32 جولة",
         "تصميم مقاوم للتحليل التفاضلي والخطي",
-        "S-Boxes ��تنوعة تزيد التعقيد",
+        "S-Boxes متنوعة تزيد التعقيد",
         "هامش أمان كبير ضد الهجمات المستقبلية",
         "مناسب للتطبيقات عالية الأمان",
         "لا توجد نقاط ضعف معروفة",
@@ -169,20 +194,25 @@ export class SerpentCipher implements ICipher {
   }
 
   /**
-   * توسيع المفتاح لجميع الجولات
+   * توسيع المفتا�� لجميع الجولات
    */
-  private expandKey(key: Buffer): Uint32Array {
+  private expandKey(key: BufferLike): Uint32Array {
     const w = new Uint32Array(140); // 132 round keys + 8 initial keys
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
 
     // تحويل المفتاح إلى كلمات 32-bit
     for (let i = 0; i < 8; i++) {
-      w[i] = key.readUInt32LE(i * 4);
+      w[i] =
+        keyData[i * 4] |
+        (keyData[i * 4 + 1] << 8) |
+        (keyData[i * 4 + 2] << 16) |
+        (keyData[i * 4 + 3] << 24);
     }
 
     // إذا كان المفتاح أقل من 256 بت، امتداد بـ padding
-    if (key.length < 32) {
-      w[key.length / 4] = 0x00000001;
-      for (let i = Math.ceil(key.length / 4) + 1; i < 8; i++) {
+    if (keyData.length < 32) {
+      w[Math.floor(keyData.length / 4)] = 0x00000001;
+      for (let i = Math.ceil(keyData.length / 4) + 1; i < 8; i++) {
         w[i] = 0;
       }
     }
@@ -213,12 +243,26 @@ export class SerpentCipher implements ICipher {
   /**
    * تشفير بلوك واحد
    */
-  private encryptBlock(block: Buffer): Buffer {
+  private encryptBlock(block: BufferLike): BufferLike {
+    const blockData =
+      block instanceof BufferPolyfill ? block.toUint8Array() : block;
     let x = [
-      block.readUInt32LE(0),
-      block.readUInt32LE(4),
-      block.readUInt32LE(8),
-      block.readUInt32LE(12),
+      blockData[0] |
+        (blockData[1] << 8) |
+        (blockData[2] << 16) |
+        (blockData[3] << 24),
+      blockData[4] |
+        (blockData[5] << 8) |
+        (blockData[6] << 16) |
+        (blockData[7] << 24),
+      blockData[8] |
+        (blockData[9] << 8) |
+        (blockData[10] << 16) |
+        (blockData[11] << 24),
+      blockData[12] |
+        (blockData[13] << 8) |
+        (blockData[14] << 16) |
+        (blockData[15] << 24),
     ];
 
     // 31 جولة أولى
@@ -250,24 +294,50 @@ export class SerpentCipher implements ICipher {
     x[2] ^= this.roundKeys[32 * 4 + 2];
     x[3] ^= this.roundKeys[32 * 4 + 3];
 
-    const result = Buffer.alloc(16);
-    result.writeUInt32LE(x[0], 0);
-    result.writeUInt32LE(x[1], 4);
-    result.writeUInt32LE(x[2], 8);
-    result.writeUInt32LE(x[3], 12);
+    const result = new Uint8Array(16);
+    result[0] = x[0] & 0xff;
+    result[1] = (x[0] >>> 8) & 0xff;
+    result[2] = (x[0] >>> 16) & 0xff;
+    result[3] = (x[0] >>> 24) & 0xff;
+    result[4] = x[1] & 0xff;
+    result[5] = (x[1] >>> 8) & 0xff;
+    result[6] = (x[1] >>> 16) & 0xff;
+    result[7] = (x[1] >>> 24) & 0xff;
+    result[8] = x[2] & 0xff;
+    result[9] = (x[2] >>> 8) & 0xff;
+    result[10] = (x[2] >>> 16) & 0xff;
+    result[11] = (x[2] >>> 24) & 0xff;
+    result[12] = x[3] & 0xff;
+    result[13] = (x[3] >>> 8) & 0xff;
+    result[14] = (x[3] >>> 16) & 0xff;
+    result[15] = (x[3] >>> 24) & 0xff;
 
-    return result;
+    return createBuffer(result);
   }
 
   /**
    * فك تشفير بلوك واحد
    */
-  private decryptBlock(block: Buffer): Buffer {
+  private decryptBlock(block: BufferLike): BufferLike {
+    const blockData =
+      block instanceof BufferPolyfill ? block.toUint8Array() : block;
     let x = [
-      block.readUInt32LE(0),
-      block.readUInt32LE(4),
-      block.readUInt32LE(8),
-      block.readUInt32LE(12),
+      blockData[0] |
+        (blockData[1] << 8) |
+        (blockData[2] << 16) |
+        (blockData[3] << 24),
+      blockData[4] |
+        (blockData[5] << 8) |
+        (blockData[6] << 16) |
+        (blockData[7] << 24),
+      blockData[8] |
+        (blockData[9] << 8) |
+        (blockData[10] << 16) |
+        (blockData[11] << 24),
+      blockData[12] |
+        (blockData[13] << 8) |
+        (blockData[14] << 16) |
+        (blockData[15] << 24),
     ];
 
     // إزالة المفتاح النهائي
@@ -300,13 +370,25 @@ export class SerpentCipher implements ICipher {
       x[3] ^= this.roundKeys[round * 4 + 3];
     }
 
-    const result = Buffer.alloc(16);
-    result.writeUInt32LE(x[0], 0);
-    result.writeUInt32LE(x[1], 4);
-    result.writeUInt32LE(x[2], 8);
-    result.writeUInt32LE(x[3], 12);
+    const result = new Uint8Array(16);
+    result[0] = x[0] & 0xff;
+    result[1] = (x[0] >>> 8) & 0xff;
+    result[2] = (x[0] >>> 16) & 0xff;
+    result[3] = (x[0] >>> 24) & 0xff;
+    result[4] = x[1] & 0xff;
+    result[5] = (x[1] >>> 8) & 0xff;
+    result[6] = (x[1] >>> 16) & 0xff;
+    result[7] = (x[1] >>> 24) & 0xff;
+    result[8] = x[2] & 0xff;
+    result[9] = (x[2] >>> 8) & 0xff;
+    result[10] = (x[2] >>> 16) & 0xff;
+    result[11] = (x[2] >>> 24) & 0xff;
+    result[12] = x[3] & 0xff;
+    result[13] = (x[3] >>> 8) & 0xff;
+    result[14] = (x[3] >>> 16) & 0xff;
+    result[15] = (x[3] >>> 24) & 0xff;
 
-    return result;
+    return createBuffer(result);
   }
 
   /**
@@ -427,29 +509,40 @@ export class SerpentCipher implements ICipher {
   /**
    * إضافة PKCS7 padding
    */
-  private addPKCS7Padding(data: Buffer): Buffer {
+  private addPKCS7Padding(data: BufferLike): BufferLike {
     const paddingLength = this.blockSize - (data.length % this.blockSize);
-    const padding = Buffer.alloc(paddingLength, paddingLength);
-    return Buffer.concat([data, padding]);
+    const padding = createBuffer(
+      new Uint8Array(paddingLength).fill(paddingLength),
+    );
+    const dataUint8 =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+    const paddingUint8 =
+      padding instanceof BufferPolyfill ? padding.toUint8Array() : padding;
+    const result = new Uint8Array(dataUint8.length + paddingUint8.length);
+    result.set(dataUint8);
+    result.set(paddingUint8, dataUint8.length);
+    return createBuffer(result);
   }
 
   /**
    * إزالة PKCS7 padding
    */
-  private removePKCS7Padding(data: Buffer): Buffer {
-    const paddingLength = data[data.length - 1];
+  private removePKCS7Padding(data: BufferLike): BufferLike {
+    const dataUint8 =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+    const paddingLength = dataUint8[dataUint8.length - 1];
 
     if (paddingLength < 1 || paddingLength > this.blockSize) {
       throw new Error("Padding غير صحيح");
     }
 
     // التحقق من صحة الـ padding
-    for (let i = data.length - paddingLength; i < data.length; i++) {
-      if (data[i] !== paddingLength) {
+    for (let i = dataUint8.length - paddingLength; i < dataUint8.length; i++) {
+      if (dataUint8[i] !== paddingLength) {
         throw new Error("Padding غير صحيح");
       }
     }
 
-    return data.slice(0, data.length - paddingLength);
+    return createBuffer(dataUint8.slice(0, dataUint8.length - paddingLength));
   }
 }
