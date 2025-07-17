@@ -15,6 +15,9 @@ import { Algorithms } from "../pages/Algorithms";
 import { AIAssistant } from "../pages/AIAssistant";
 import { CryptoTest } from "../pages/CryptoTest";
 
+// Import crypto factory for encrypt page
+import { CipherFactory } from "../../core/crypto/CipherFactory";
+
 export const ModernApp: React.FC = () => {
   useEffect(() => {
     // Add modern theme to body
@@ -253,7 +256,7 @@ const ThreatDetectionPage: React.FC = () => (
       </div>
 
       <div className="glass-card p-6">
-        <h3 className="font-bold text-white mb-4">التهديدات المحجوبة</h3>
+        <h3 className="font-bold text-white mb-4">��لتهديدات المحجوبة</h3>
         <div className="text-center">
           <div className="text-4xl mb-2">🚫</div>
           <div className="text-red-400 font-bold text-2xl">0</div>
