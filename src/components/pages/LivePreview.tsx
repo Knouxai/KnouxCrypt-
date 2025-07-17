@@ -1,23 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface ServiceMetric {
-  name: string;
-  value: number;
-  unit: string;
-  color: string;
-}
-
-interface CryptoService {
-  id: string;
-  name: string;
-  status: "running" | "stopped" | "starting";
-  type: "encryption" | "system" | "analysis";
-  metrics: ServiceMetric[];
-  lastActivity: string;
-  description: string;
-  version: string;
-}
+import useServiceMonitor from "../../hooks/useServiceMonitor";
 
 interface ServiceDetail {
   icon: string;
@@ -28,95 +11,15 @@ interface ServiceDetail {
 const LivePreview: React.FC = () => {
   const [selectedService, setSelectedService] = useState<string>("aes-cipher");
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [liveMetrics, setLiveMetrics] = useState<Record<string, number>>({});
 
-  // Mock services data
-  const services: CryptoService[] = [
-    {
-      id: "aes-cipher",
-      name: "AES-256 Cipher",
-      status: "running",
-      type: "encryption",
-      metrics: [
-        { name: "CPU", value: 45, unit: "%", color: "#3B82F6" },
-        { name: "Memory", value: 68, unit: "%", color: "#8B5CF6" },
-        { name: "Operations", value: 1247, unit: "/s", color: "#10B981" },
-      ],
-      lastActivity: "منذ 2 ثانية",
-      description: "خدمة التشفير المتقدم AES-256",
-      version: "2.1.0",
-    },
-    {
-      id: "serpent-cipher",
-      name: "Serpent Cipher",
-      status: "running",
-      type: "encryption",
-      metrics: [
-        { name: "CPU", value: 32, unit: "%", color: "#3B82F6" },
-        { name: "Memory", value: 54, unit: "%", color: "#8B5CF6" },
-        { name: "Operations", value: 892, unit: "/s", color: "#10B981" },
-      ],
-      lastActivity: "منذ 5 ثوان",
-      description: "خدمة تشفير سيربنت عالية الأمان",
-      version: "1.8.2",
-    },
-    {
-      id: "twofish-cipher",
-      name: "Twofish Cipher",
-      status: "stopped",
-      type: "encryption",
-      metrics: [
-        { name: "CPU", value: 0, unit: "%", color: "#3B82F6" },
-        { name: "Memory", value: 12, unit: "%", color: "#8B5CF6" },
-        { name: "Operations", value: 0, unit: "/s", color: "#10B981" },
-      ],
-      lastActivity: "منذ 10 دقائق",
-      description: "خدمة تشفير تووفيش",
-      version: "1.5.1",
-    },
-    {
-      id: "triple-cipher",
-      name: "Triple Cipher",
-      status: "starting",
-      type: "encryption",
-      metrics: [
-        { name: "CPU", value: 78, unit: "%", color: "#3B82F6" },
-        { name: "Memory", value: 85, unit: "%", color: "#8B5CF6" },
-        { name: "Operations", value: 2156, unit: "/s", color: "#10B981" },
-      ],
-      lastActivity: "منذ ثانية واحدة",
-      description: "نظام التشفير الثلاثي المتقدم",
-      version: "3.0.0",
-    },
-    {
-      id: "system-analyzer",
-      name: "System Analyzer",
-      status: "running",
-      type: "analysis",
-      metrics: [
-        { name: "CPU", value: 23, unit: "%", color: "#3B82F6" },
-        { name: "Memory", value: 41, unit: "%", color: "#8B5CF6" },
-        { name: "Scans", value: 156, unit: "/h", color: "#F59E0B" },
-      ],
-      lastActivity: "منذ 3 ثوان",
-      description: "محلل النظام والأمان",
-      version: "4.2.1",
-    },
-    {
-      id: "ai-assistant",
-      name: "AI Assistant",
-      status: "running",
-      type: "analysis",
-      metrics: [
-        { name: "CPU", value: 67, unit: "%", color: "#3B82F6" },
-        { name: "Memory", value: 72, unit: "%", color: "#8B5CF6" },
-        { name: "Queries", value: 45, unit: "/m", color: "#EF4444" },
-      ],
-      lastActivity: "نشط الآن",
-      description: "مساعد الذكاء الاصطناعي",
-      version: "2.5.0",
-    },
-  ];
+  const {
+    services,
+    systemMetrics,
+    isMonitoring,
+    startService,
+    stopService,
+    restartService,
+  } = useServiceMonitor();
 
   const currentService = services.find((s) => s.id === selectedService);
 
