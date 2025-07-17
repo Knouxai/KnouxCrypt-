@@ -10,7 +10,7 @@ interface QuickActionCard {
   path: string;
   color: string;
   gradient: string;
-  status: 'active' | 'idle' | 'processing';
+  status: "active" | "idle" | "processing";
   stats?: {
     label: string;
     value: string;
@@ -24,8 +24,8 @@ interface SecurityMetric {
   maxValue: number;
   color: string;
   icon: string;
-  trend: 'up' | 'down' | 'stable';
-  status: 'excellent' | 'good' | 'warning' | 'critical';
+  trend: "up" | "down" | "stable";
+  status: "excellent" | "good" | "warning" | "critical";
 }
 
 const quickActions: QuickActionCard[] = [
@@ -37,8 +37,8 @@ const quickActions: QuickActionCard[] = [
     path: "/algorithms",
     color: "#6366F1",
     gradient: "from-indigo-500 to-purple-600",
-    status: 'active',
-    stats: { label: "خوارزميات", value: "4" }
+    status: "active",
+    stats: { label: "خوارزميات", value: "4" },
   },
   {
     title: "إدارة الأقراص الذكية",
@@ -48,8 +48,8 @@ const quickActions: QuickActionCard[] = [
     path: "/disk-manager",
     color: "#10B981",
     gradient: "from-emerald-500 to-teal-600",
-    status: 'active',
-    stats: { label: "أقراص", value: "5" }
+    status: "active",
+    stats: { label: "أقراص", value: "5" },
   },
   {
     title: "تشفير النظام الكامل",
@@ -59,8 +59,8 @@ const quickActions: QuickActionCard[] = [
     path: "/system-encryption",
     color: "#F59E0B",
     gradient: "from-amber-500 to-orange-600",
-    status: 'idle',
-    stats: { label: "حماية", value: "98%" }
+    status: "idle",
+    stats: { label: "حماية", value: "98%" },
   },
   {
     title: "المساعد الذكي AI",
@@ -70,52 +70,52 @@ const quickActions: QuickActionCard[] = [
     path: "/ai-assistant",
     color: "#8B5CF6",
     gradient: "from-violet-500 to-purple-600",
-    status: 'active',
-    stats: { label: "توصيات", value: "12" }
+    status: "active",
+    stats: { label: "توصيات", value: "12" },
   },
 ];
 
 const securityMetrics: SecurityMetric[] = [
   {
-    id: 'encryption',
-    label: 'قوة التشفير',
+    id: "encryption",
+    label: "قوة التشفير",
     value: 98,
     maxValue: 100,
-    color: '#10B981',
-    icon: '🔐',
-    trend: 'up',
-    status: 'excellent'
+    color: "#10B981",
+    icon: "🔐",
+    trend: "up",
+    status: "excellent",
   },
   {
-    id: 'quantum-resistance',
-    label: 'مقاومة الكمبيوتر الكمي',
+    id: "quantum-resistance",
+    label: "مقاومة الكمبيوتر الكمي",
     value: 95,
     maxValue: 100,
-    color: '#6366F1',
-    icon: '⚛️',
-    trend: 'stable',
-    status: 'excellent'
+    color: "#6366F1",
+    icon: "⚛️",
+    trend: "stable",
+    status: "excellent",
   },
   {
-    id: 'performance',
-    label: 'أداء النظام',
+    id: "performance",
+    label: "أداء النظام",
     value: 87,
     maxValue: 100,
-    color: '#F59E0B',
-    icon: '⚡',
-    trend: 'up',
-    status: 'good'
+    color: "#F59E0B",
+    icon: "⚡",
+    trend: "up",
+    status: "good",
   },
   {
-    id: 'threat-detection',
-    label: 'كشف التهديدات',
+    id: "threat-detection",
+    label: "كشف التهديدات",
     value: 92,
     maxValue: 100,
-    color: '#EF4444',
-    icon: '🎯',
-    trend: 'up',
-    status: 'excellent'
-  }
+    color: "#EF4444",
+    icon: "🎯",
+    trend: "up",
+    status: "excellent",
+  },
 ];
 
 export const Dashboard: React.FC = () => {
@@ -134,14 +134,14 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleString('ar-SA', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
+    return date.toLocaleString("ar-SA", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 
@@ -158,11 +158,11 @@ export const Dashboard: React.FC = () => {
               className="inline-block text-6xl mb-4"
               animate={{
                 rotate: 360,
-                scale: [1, 1.1, 1]
+                scale: [1, 1.1, 1],
               }}
               transition={{
                 rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                scale: { duration: 1, repeat: Infinity }
+                scale: { duration: 1, repeat: Infinity },
               }}
             >
               🔐
@@ -206,12 +206,12 @@ export const Dashboard: React.FC = () => {
                 className="text-6xl"
                 animate={{
                   rotate: [0, 10, -10, 0],
-                  scale: [1, 1.05, 1]
+                  scale: [1, 1.05, 1],
                 }}
                 transition={{
                   duration: 4,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               >
                 🛡️
@@ -253,15 +253,13 @@ export const Dashboard: React.FC = () => {
                 <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse" />
                 نظام محمي بالكامل
               </div>
-              <div className="text-sm text-gray-400">
-                مستوى الأمان: عسكري
-              </div>
+              <div className="text-sm text-gray-400">مستوى الأمان: عسكري</div>
             </motion.div>
           </div>
         </div>
       </motion.div>
 
-            {/* Security Metrics Dashboard */}
+      {/* Security Metrics Dashboard */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -273,12 +271,12 @@ export const Dashboard: React.FC = () => {
             key={metric.id}
             className={`relative overflow-hidden rounded-2xl p-6 backdrop-blur-md border transition-all duration-500 cursor-pointer group ${
               activeMetric === metric.id
-                ? 'scale-105 shadow-2xl'
-                : 'hover:scale-102 hover:shadow-xl'
+                ? "scale-105 shadow-2xl"
+                : "hover:scale-102 hover:shadow-xl"
             }`}
             style={{
               background: `linear-gradient(135deg, ${metric.color}15, ${metric.color}05)`,
-              borderColor: `${metric.color}30`
+              borderColor: `${metric.color}30`,
             }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -291,44 +289,66 @@ export const Dashboard: React.FC = () => {
               <div className="text-3xl group-hover:scale-110 transition-transform duration-300">
                 {metric.icon}
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs font-bold ${metric.status === 'excellent' ? 'bg-green-500/20 text-green-300' : metric.status === 'good' ? 'bg-blue-500/20 text-blue-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
-                {metric.status === 'excellent' ? 'ممتاز' : metric.status === 'good' ? 'جيد' : 'مقبول'}
+              <div
+                className={`px-2 py-1 rounded-full text-xs font-bold ${metric.status === "excellent" ? "bg-green-500/20 text-green-300" : metric.status === "good" ? "bg-blue-500/20 text-blue-300" : "bg-yellow-500/20 text-yellow-300"}`}
+              >
+                {metric.status === "excellent"
+                  ? "ممتاز"
+                  : metric.status === "good"
+                    ? "جيد"
+                    : "مقبول"}
               </div>
             </div>
 
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-white mb-2">{metric.label}</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                {metric.label}
+              </h3>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-2xl font-bold" style={{ color: metric.color }}>
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: metric.color }}
+                >
                   {metric.value}%
                 </span>
-                <div className={`text-sm ${
-                  metric.trend === 'up' ? 'text-green-400' :
-                  metric.trend === 'down' ? 'text-red-400' : 'text-gray-400'
-                }`}>
-                  {metric.trend === 'up' ? '↗️' : metric.trend === 'down' ? '↘️' : '➡️'}
+                <div
+                  className={`text-sm ${
+                    metric.trend === "up"
+                      ? "text-green-400"
+                      : metric.trend === "down"
+                        ? "text-red-400"
+                        : "text-gray-400"
+                  }`}
+                >
+                  {metric.trend === "up"
+                    ? "↗️"
+                    : metric.trend === "down"
+                      ? "↘️"
+                      : "➡️"}
                 </div>
               </div>
 
               <div className="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
                 <motion.div
                   className="h-full rounded-full"
-                  style={{ background: `linear-gradient(90deg, ${metric.color}, ${metric.color}aa)` }}
+                  style={{
+                    background: `linear-gradient(90deg, ${metric.color}, ${metric.color}aa)`,
+                  }}
                   initial={{ width: 0 }}
-                  animate={{ width: `${(metric.value / metric.maxValue) * 100}%` }}
+                  animate={{
+                    width: `${(metric.value / metric.maxValue) * 100}%`,
+                  }}
                   transition={{ duration: 1.5, delay: 0.5 + index * 0.1 }}
                 />
               </div>
             </div>
 
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"
-            />
+            <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
           </motion.div>
         ))}
       </motion.div>
 
-              {/* Advanced Quick Actions */}
+      {/* Advanced Quick Actions */}
       <motion.div
         className="mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -350,7 +370,7 @@ export const Dashboard: React.FC = () => {
               key={action.path}
               className="group relative overflow-hidden rounded-3xl backdrop-blur-md border border-white/10 transition-all duration-500 cursor-pointer"
               style={{
-                background: `linear-gradient(135deg, ${action.color}20, ${action.color}10, transparent)`
+                background: `linear-gradient(135deg, ${action.color}20, ${action.color}10, transparent)`,
               }}
               initial={{ opacity: 0, y: 30, rotateX: 45 }}
               animate={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -358,25 +378,27 @@ export const Dashboard: React.FC = () => {
                 duration: 0.6,
                 delay: 0.8 + index * 0.1,
                 type: "spring",
-                stiffness: 100
+                stiffness: 100,
               }}
               whileHover={{
                 scale: 1.05,
                 y: -10,
-                transition: { duration: 0.3 }
+                transition: { duration: 0.3 },
               }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(action.path)}
             >
               {/* Status Indicator */}
               <div className="absolute top-4 left-4">
-                <div className={`w-3 h-3 rounded-full ${
-                  action.status === 'active'
-                    ? 'bg-green-400 shadow-lg shadow-green-400/50 animate-pulse'
-                    : action.status === 'processing'
-                    ? 'bg-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse'
-                    : 'bg-gray-400 shadow-lg shadow-gray-400/50'
-                }`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    action.status === "active"
+                      ? "bg-green-400 shadow-lg shadow-green-400/50 animate-pulse"
+                      : action.status === "processing"
+                        ? "bg-yellow-400 shadow-lg shadow-yellow-400/50 animate-pulse"
+                        : "bg-gray-400 shadow-lg shadow-gray-400/50"
+                  }`}
+                />
               </div>
 
               {/* Stats Badge */}
@@ -390,7 +412,9 @@ export const Dashboard: React.FC = () => {
                 {/* Icon */}
                 <motion.div
                   className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300"
-                  style={{ filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.3))' }}
+                  style={{
+                    filter: "drop-shadow(0 0 20px rgba(255,255,255,0.3))",
+                  }}
                 >
                   {action.icon}
                 </motion.div>
@@ -418,8 +442,18 @@ export const Dashboard: React.FC = () => {
                     whileHover={{ x: 5 }}
                   >
                     <span className="text-sm font-medium ml-2">الدخول</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
                     </svg>
                   </motion.div>
                 </div>
@@ -431,15 +465,13 @@ export const Dashboard: React.FC = () => {
               />
 
               {/* Shimmer Effect */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"
-              />
+              <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             </motion.div>
           ))}
         </div>
       </motion.div>
 
-              {/* Advanced System Overview */}
+      {/* Advanced System Overview */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -450,7 +482,8 @@ export const Dashboard: React.FC = () => {
         <motion.div
           className="relative overflow-hidden rounded-3xl backdrop-blur-md border border-white/10 p-8"
           style={{
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))'
+            background:
+              "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15))",
           }}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
@@ -466,10 +499,25 @@ export const Dashboard: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-6">
             {[
-              { icon: '💿', label: 'أقراص مكتشفة', value: '5', color: '#6366F1' },
-              { icon: '🔐', label: 'أقراص مشفرة', value: '3', color: '#10B981' },
-              { icon: '🧠', label: 'مساعد AI', value: 'نشط', color: '#8B5CF6' },
-              { icon: '⚡', label: 'خوارزمية رئيسية', value: 'AES-256', color: '#F59E0B' }
+              {
+                icon: "💿",
+                label: "أقراص مكتشفة",
+                value: "5",
+                color: "#6366F1",
+              },
+              {
+                icon: "🔐",
+                label: "أقراص مشفرة",
+                value: "3",
+                color: "#10B981",
+              },
+              { icon: "🧠", label: "مساعد AI", value: "نشط", color: "#8B5CF6" },
+              {
+                icon: "⚡",
+                label: "خوارزمية رئيسية",
+                value: "AES-256",
+                color: "#F59E0B",
+              },
             ].map((stat, idx) => (
               <motion.div
                 key={stat.label}
@@ -479,29 +527,34 @@ export const Dashboard: React.FC = () => {
                 transition={{ delay: 1.1 + idx * 0.1 }}
                 whileHover={{ y: -5, scale: 1.05 }}
               >
-                <div className="text-3xl mb-2" style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3))' }}>
+                <div
+                  className="text-3xl mb-2"
+                  style={{
+                    filter: "drop-shadow(0 0 10px rgba(255,255,255,0.3))",
+                  }}
+                >
                   {stat.icon}
                 </div>
-                <div className="text-2xl font-bold mb-1" style={{ color: stat.color }}>
+                <div
+                  className="text-2xl font-bold mb-1"
+                  style={{ color: stat.color }}
+                >
                   {stat.value}
                 </div>
-                <div className="text-sm text-gray-400">
-                  {stat.label}
-                </div>
+                <div className="text-sm text-gray-400">{stat.label}</div>
               </motion.div>
             ))}
           </div>
 
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-1000"
-          />
+          <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-1000" />
         </motion.div>
 
         {/* Real-time Activity Feed */}
         <motion.div
           className="relative overflow-hidden rounded-3xl backdrop-blur-md border border-white/10 p-8"
           style={{
-            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))'
+            background:
+              "linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(59, 130, 246, 0.15))",
           }}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.3 }}
@@ -517,10 +570,30 @@ export const Dashboard: React.FC = () => {
 
           <div className="space-y-4">
             {[
-              { time: 'قبل دقيقتين', action: 'تم تشفير قرص USB بنجاح', status: 'success', icon: '✓' },
-              { time: 'قبل 5 دقائق', action: 'فحص أمان تلقائي للنظام', status: 'info', icon: '🔍' },
-              { time: 'قبل 10 دقائق', action: 'تحديث قواعد كشف التهديدات', status: 'warning', icon: '⚠️' },
-              { time: 'قبل 15 دقيقة', action: 'AI يقترح تحسينات أمنية', status: 'info', icon: '🧠' }
+              {
+                time: "قبل دقيقتين",
+                action: "تم تشفير قرص USB بنجاح",
+                status: "success",
+                icon: "✓",
+              },
+              {
+                time: "قبل 5 دقائق",
+                action: "فحص أمان تلقائي للنظام",
+                status: "info",
+                icon: "🔍",
+              },
+              {
+                time: "قبل 10 دقائق",
+                action: "تحديث قواعد كشف التهديدات",
+                status: "warning",
+                icon: "⚠️",
+              },
+              {
+                time: "قبل 15 دقيقة",
+                action: "AI يقترح تحسينات أمنية",
+                status: "info",
+                icon: "🧠",
+              },
             ].map((activity, idx) => (
               <motion.div
                 key={idx}
@@ -530,20 +603,22 @@ export const Dashboard: React.FC = () => {
                 transition={{ delay: 1.2 + idx * 0.1 }}
                 whileHover={{ x: -5 }}
               >
-                <div className={`text-xl p-2 rounded-full ${
-                  activity.status === 'success' ? 'bg-green-500/20 text-green-300' :
-                  activity.status === 'warning' ? 'bg-yellow-500/20 text-yellow-300' :
-                  'bg-blue-500/20 text-blue-300'
-                }`}>
+                <div
+                  className={`text-xl p-2 rounded-full ${
+                    activity.status === "success"
+                      ? "bg-green-500/20 text-green-300"
+                      : activity.status === "warning"
+                        ? "bg-yellow-500/20 text-yellow-300"
+                        : "bg-blue-500/20 text-blue-300"
+                  }`}
+                >
                   {activity.icon}
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-medium text-white">
                     {activity.action}
                   </div>
-                  <div className="text-xs text-gray-400">
-                    {activity.time}
-                  </div>
+                  <div className="text-xs text-gray-400">{activity.time}</div>
                 </div>
               </motion.div>
             ))}
@@ -562,15 +637,11 @@ export const Dashboard: React.FC = () => {
           className="inline-flex items-center px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-lg shadow-2xl hover:shadow-indigo-500/25 transition-all duration-300 cursor-pointer"
           whileHover={{ scale: 1.05, y: -5 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/algorithms')}
+          onClick={() => navigate("/algorithms")}
         >
           🚀 استكشف قوة الخوارزميات المتقدمة
         </motion.div>
       </motion.div>
-    </div>
-  );
-};
-      </div>
     </div>
   );
 };
