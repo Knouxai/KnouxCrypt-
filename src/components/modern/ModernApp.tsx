@@ -13,6 +13,7 @@ import { DiskManager } from "../pages/DiskManager";
 import { SystemEncryption } from "../pages/SystemEncryption";
 import { Algorithms } from "../pages/Algorithms";
 import { AIAssistant } from "../pages/AIAssistant";
+import { CryptoTest } from "../pages/CryptoTest";
 
 export const ModernApp: React.FC = () => {
   useEffect(() => {
@@ -57,6 +58,7 @@ export const ModernApp: React.FC = () => {
                     path="/threat-detection"
                     element={<ThreatDetectionPage />}
                   />
+                  <Route path="/crypto-test" element={<CryptoTest />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/logs" element={<LogsPage />} />
                 </Routes>
