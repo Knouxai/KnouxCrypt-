@@ -1,4 +1,7 @@
-import "./utils/buffer-polyfill"; // Import buffer polyfill first
+// Set up Buffer polyfill for browser compatibility
+import { Buffer } from "buffer";
+window.Buffer = Buffer;
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
