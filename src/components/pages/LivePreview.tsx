@@ -106,7 +106,7 @@ const LivePreview: React.FC = () => {
             <div className="flex items-center gap-6 text-sm text-gray-300">
               <span>ملف</span>
               <span>عرض</span>
-              <span>خدمات</span>
+              <span>خدم��ت</span>
               <span>أدوات</span>
               <span>مساعدة</span>
             </div>
@@ -385,18 +385,10 @@ const LivePreview: React.FC = () => {
                     <div className="space-y-3">
                       <div className="p-3 bg-white/5 rounded-lg">
                         <div className="text-sm font-medium text-white">
-                          الوصف
+                          وقت التشغيل
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {currentService.description}
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white/5 rounded-lg">
-                        <div className="text-sm font-medium text-white">
-                          الإصدار
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {currentService.version}
+                          {formatUptime(currentService.uptime)}
                         </div>
                       </div>
                       <div className="p-3 bg-white/5 rounded-lg">
@@ -404,7 +396,20 @@ const LivePreview: React.FC = () => {
                           آخر نشاط
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          {currentService.lastActivity}
+                          {formatLastActivity(currentService.lastActivity)}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/5 rounded-lg">
+                        <div className="text-sm font-medium text-white">
+                          الأخطاء والتحذيرات
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1 flex gap-4">
+                          <span className="text-red-400">
+                            أخطاء: {currentService.errors}
+                          </span>
+                          <span className="text-yellow-400">
+                            تحذيرات: {currentService.warnings}
+                          </span>
                         </div>
                       </div>
                     </div>
