@@ -1,6 +1,6 @@
 /**
  * KnouxCrypt™ - Advanced Encryption Interface
- * واجهة التشفير الموحدة لجميع الخوا��زميات
+ * واجهة التشفير الموحدة لجميع الخوارزميات
  */
 
 import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
@@ -311,15 +311,24 @@ export class SecureKeyGenerator {
     // في التطبيق الحقيقي، استخدم مكتبة مخصصة
     if (typeof require !== "undefined") {
       const crypto = require("crypto");
-      return crypto.pbkdf2Sync(password, salt, iterations, keyLength, "sha256");
+      return createBuffer(
+        crypto.pbkdf2Sync(password, salt, iterations, keyLength, "sha256"),
+      );
     }
 
     // Fallback بسيط للمتصفح
-    let key = Buffer.from(password + salt.toString("hex"), "utf8");
+    const saltStr =
+      salt instanceof BufferPolyfill
+        ? salt.toString("hex")
+        : Array.from(salt as Uint8Array)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+    let key = createBuffer(password + saltStr, "utf8");
     for (let i = 0; i < iterations; i++) {
       key = this.simpleHash(key);
     }
-    return key.slice(0, keyLength);
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
+    return createBuffer(keyData.slice(0, keyLength));
   }
 
   private static simpleHash(data: Buffer): Buffer {
