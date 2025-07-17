@@ -407,6 +407,12 @@ export const Sidebar: React.FC = () => {
         isOpen={isAIAssistantOpen}
         onClose={() => setIsAIAssistantOpen(false)}
       />
+
+      {/* About Dialog */}
+      <AboutDialog
+        isVisible={isAboutDialogOpen}
+        onClose={() => setIsAboutDialogOpen(false)}
+      />
     </motion.div>
   );
 };
