@@ -11,7 +11,7 @@ type BufferLike = BufferPolyfill | Uint8Array;
 export interface ICipher {
   /**
    * 🔐 تشفير البيانات
-   * @param data البيانات المراد تشفيرها (نص أو Buffer)
+   * @param data ال��يانات المراد تشفيرها (نص أو Buffer)
    * @returns البيانات المشفرة
    */
   encrypt(data: string | BufferLike): BufferLike;
@@ -167,7 +167,7 @@ export const CipherErrorCodes = {
 } as const;
 
 /**
- * أداة مساع��ة للتحقق من صحة المفاتيح
+ * أداة مساعدة للتحقق من صحة المفاتيح
  */
 export class KeyValidator {
   /**
@@ -213,7 +213,7 @@ export class KeyValidator {
   }
 
   /**
-   * حساب الإنتروبي�� (العشوائية)
+   * حساب الإنتروبيا (العشوائية)
    */
   private static calculateEntropy(data: BufferLike): number {
     const freq = new Map<number, number>();
@@ -278,23 +278,23 @@ export class SecureKeyGenerator {
   /**
    * إنشاء مفتاح عشوائي آمن
    */
-  static generateSecureKey(size: number = 32): Buffer {
+  static generateSecureKey(size: number = 32): BufferLike {
     if (typeof window !== "undefined" && window.crypto) {
       // في المتصفح
       const key = new Uint8Array(size);
       window.crypto.getRandomValues(key);
-      return Buffer.from(key);
+      return createBuffer(key);
     } else if (typeof require !== "undefined") {
       // في Node.js
       const crypto = require("crypto");
-      return crypto.randomBytes(size);
+      return createBuffer(crypto.randomBytes(size));
     } else {
       // fallback بسيط
       const key = new Uint8Array(size);
       for (let i = 0; i < size; i++) {
         key[i] = Math.floor(Math.random() * 256);
       }
-      return Buffer.from(key);
+      return createBuffer(key);
     }
   }
 
