@@ -115,7 +115,7 @@ export const ModernSidebar: React.FC = () => {
           path: "/crypto-test",
           icon: "🧪",
           label: "مختبر التشفير",
-          description: "اختبار وحدات التشفير",
+          description: "اختبار وحدات التش��ير",
           badge: "تجريبي",
           shortcut: "Ctrl+T",
         },
@@ -158,6 +158,8 @@ export const ModernSidebar: React.FC = () => {
         return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
       case "AI":
         return "bg-purple-500/20 text-purple-400 border-purple-500/30";
+      case "مباشر":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
       default:
         return "bg-blue-500/20 text-blue-400 border-blue-500/30";
     }
