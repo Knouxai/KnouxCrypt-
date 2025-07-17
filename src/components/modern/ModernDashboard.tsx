@@ -108,7 +108,7 @@ export const ModernDashboard: React.FC = () => {
   const [recentAlerts, setRecentAlerts] = useState<ThreatAlert[]>([
     {
       id: "alert1",
-      title: "محاولة وصول مشبوهة",
+      title: "محاولة و��ول مشبوهة",
       description: "تم اكتشاف محاولة وصول غير مصرح بها للملفات المشفرة",
       severity: "high",
       timestamp: new Date(Date.now() - 300000),
@@ -423,7 +423,7 @@ export const ModernDashboard: React.FC = () => {
             {/* System Status */}
             <div className="mt-6 pt-6 border-t border-white/10">
               <div className="text-lg font-bold text-white mb-4">
-                حالة النظام
+                حا��ة النظام
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -504,6 +504,9 @@ export const ModernDashboard: React.FC = () => {
           ))}
         </div>
       </motion.div>
+
+      {/* Quick Access to Live Preview */}
+      <LivePreviewQuickAccess />
     </div>
   );
 };
