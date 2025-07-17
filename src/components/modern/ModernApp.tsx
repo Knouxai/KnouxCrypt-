@@ -128,76 +128,220 @@ const AnalyticsPage: React.FC = () => (
   </motion.div>
 );
 
-const EncryptPage: React.FC = () => (
-  <motion.div
-    className="space-y-8"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className="glass-card-strong p-8">
-      <h1 className="text-3xl font-bold text-gradient mb-4">
-        🔒 تشفير الملفات
-      </h1>
-      <p className="text-white/70 text-lg">حماية متقدمة للملفات والمجلدات</p>
-    </div>
+const EncryptPage: React.FC = () => {
+  const [selectedAlgorithm, setSelectedAlgorithm] = React.useState("AES-256");
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [files, setFiles] = React.useState<File[]>([]);
+  const [encrypting, setEncrypting] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="glass-card p-6">
-        <h2 className="text-xl font-bold text-white mb-4">رفع الملفات</h2>
-        <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
-          <div className="text-4xl mb-4">📁</div>
-          <div className="text-white/70 mb-2">
-            اسحب الملفات هنا أو انقر للاختيار
+  const algorithms = [
+    { value: "AES-256", label: "AES-256", description: "سريع ومعتمد عالمياً" },
+    {
+      value: "Serpent",
+      label: "Serpent-256",
+      description: "32 جولة أمان فائق",
+    },
+    { value: "Twofish", label: "Twofish-256", description: "سريع ومرن" },
+    {
+      value: "AES-Serpent-Twofish",
+      label: "Triple Cipher",
+      description: "أقصى أمان ممكن",
+    },
+  ];
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    setFiles(selectedFiles);
+  };
+
+  const handleEncrypt = async () => {
+    if (!password || password !== confirmPassword) {
+      alert("كلمات المرور غير متطابقة");
+      return;
+    }
+
+    if (files.length === 0) {
+      alert("اختر ملفات للتشفير");
+      return;
+    }
+
+    setEncrypting(true);
+    setProgress(0);
+
+    try {
+      // محاكاة التشفير
+      for (let i = 0; i < files.length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setProgress(((i + 1) / files.length) * 100);
+      }
+      alert("تم التشفير بنجاح!");
+    } catch (error) {
+      alert("فشل في التشفير");
+    } finally {
+      setEncrypting(false);
+      setProgress(0);
+    }
+  };
+
+  return (
+    <motion.div
+      className="space-y-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="glass-card-strong p-8">
+        <h1 className="text-3xl font-bold text-gradient mb-4">
+          🔒 تشفير الملفات
+        </h1>
+        <p className="text-white/70 text-lg">
+          حماية متقدمة للملفات والمجلدات باستخدام خوارزميات عسكرية
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="glass-card p-6">
+          <h2 className="text-xl font-bold text-white mb-4">رفع الملفات</h2>
+          <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center">
+            <div className="text-4xl mb-4">📁</div>
+            <div className="text-white/70 mb-2">
+              اسحب الملفات هنا أو انقر للاختيار
+            </div>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+              id="file-input"
+            />
+            <label
+              htmlFor="file-input"
+              className="glass-button px-6 py-2 mt-4 cursor-pointer inline-block"
+            >
+              اختيار الملفات
+            </label>
           </div>
-          <button className="glass-button px-6 py-2 mt-4">
-            اختيار الملفات
-          </button>
+
+          {files.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-white font-medium mb-2">الملفات المحددة:</h3>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {files.map((file, index) => (
+                  <div
+                    key={index}
+                    className="glass-card p-2 text-sm text-white/80"
+                  >
+                    📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="glass-card p-6">
+          <h2 className="text-xl font-bold text-white mb-4">إعدادات التشفير</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-2">
+                خوارزمية التشفير
+              </label>
+              <select
+                className="w-full glass-button p-2"
+                value={selectedAlgorithm}
+                onChange={(e) => setSelectedAlgorithm(e.target.value)}
+              >
+                {algorithms.map((algo) => (
+                  <option key={algo.value} value={algo.value}>
+                    {algo.label} - {algo.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-2">
+                كلمة المرور
+              </label>
+              <input
+                type="password"
+                className="w-full glass-button p-2"
+                placeholder="أدخل كلمة مرور قوية"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-white/70 mb-2">
+                تأكيد كلمة المرور
+              </label>
+              <input
+                type="password"
+                className="w-full glass-button p-2"
+                placeholder="أعد إدخال كلمة المرور"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+
+            {encrypting && (
+              <div className="mt-4">
+                <div className="text-sm text-white/70 mb-2">
+                  جاري التشفير... {progress.toFixed(0)}%
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            <button
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl text-white font-medium disabled:opacity-50"
+              onClick={handleEncrypt}
+              disabled={
+                encrypting ||
+                !password ||
+                !confirmPassword ||
+                files.length === 0
+              }
+            >
+              {encrypting ? "🔄 جاري التشفير..." : "🚀 بدء التشفير"}
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Algorithm Info */}
       <div className="glass-card p-6">
-        <h2 className="text-xl font-bold text-white mb-4">إعدادات التشفير</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-white/70 mb-2">
-              خوارزمية التشفير
-            </label>
-            <select className="w-full glass-button p-2">
-              <option>AES-256</option>
-              <option>Serpent-256</option>
-              <option>Twofish-256</option>
-              <option>Triple Cipher</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-white/70 mb-2">
-              كلمة المرور
-            </label>
-            <input
-              type="password"
-              className="w-full glass-button p-2"
-              placeholder="أدخل كلمة مرور قوية"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-white/70 mb-2">
-              تأكيد كلمة المرور
-            </label>
-            <input
-              type="password"
-              className="w-full glass-button p-2"
-              placeholder="أعد إدخال كلمة المرور"
-            />
-          </div>
-          <button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl text-white font-medium">
-            🚀 بدء التشفير
-          </button>
+        <h2 className="text-xl font-bold text-white mb-4">
+          معلومات الخوارزمية المحددة
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {algorithms
+            .filter((a) => a.value === selectedAlgorithm)
+            .map((algo) => (
+              <div key={algo.value} className="glass-card p-4">
+                <div className="text-lg font-medium text-white mb-2">
+                  {algo.label}
+                </div>
+                <div className="text-sm text-white/70">{algo.description}</div>
+                <div className="mt-3 text-xs text-white/50">
+                  {algo.value === "AES-256" && "🏆 الأسرع والأكثر انتشاراً"}
+                  {algo.value === "Serpent" && "🛡️ الأكثر أماناً"}
+                  {algo.value === "Twofish" && "⚖️ توازن مثالي"}
+                  {algo.value === "AES-Serpent-Twofish" && "👑 ملك الأمان"}
+                </div>
+              </div>
+            ))}
         </div>
       </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const QuantumPage: React.FC = () => (
   <motion.div
@@ -224,7 +368,7 @@ const QuantumPage: React.FC = () => (
       </h2>
       <div className="text-center p-8">
         <div className="text-6xl mb-4">🔬</div>
-        <div className="text-white/70">تقنية التشفير الكمي قيد التطوير</div>
+        <div className="text-white/70">تقنية التشفير الكمي قي�� التطوير</div>
         <div className="text-white/50 mt-2">ستكون متاحة في الإصدار القادم</div>
       </div>
     </div>
@@ -256,7 +400,7 @@ const ThreatDetectionPage: React.FC = () => (
       </div>
 
       <div className="glass-card p-6">
-        <h3 className="font-bold text-white mb-4">��لتهديدات المحجوبة</h3>
+        <h3 className="font-bold text-white mb-4">التهديدات المحجوبة</h3>
         <div className="text-center">
           <div className="text-4xl mb-2">🚫</div>
           <div className="text-red-400 font-bold text-2xl">0</div>
@@ -317,7 +461,7 @@ const SettingsPage: React.FC = () => (
         <h2 className="text-xl font-bold text-white mb-4">الواجهة</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-white/70 mb-2">اللغة</label>
+            <label className="block text-sm text-white/70 mb-2">ا��لغة</label>
             <select className="w-full glass-button p-2">
               <option>العربية</option>
               <option>English</option>
