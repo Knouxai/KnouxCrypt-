@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ModernCard } from "../UI/ModernCard";
+import { NeonButton2025 } from "../UI/NeonButton2025";
+import { QuantumProgress } from "../UI/QuantumProgress";
+import { useNotifications } from "../UI/QuantumNotification";
 import {
   CipherFactory,
   SupportedCipherType,
@@ -41,6 +45,7 @@ interface BenchmarkResult {
 }
 
 export const Algorithms: React.FC = () => {
+  const { addNotification } = useNotifications();
   const [selectedTab, setSelectedTab] = useState<
     "overview" | "demo" | "benchmark" | "compare"
   >("overview");
@@ -285,41 +290,125 @@ export const Algorithms: React.FC = () => {
   return (
     <div className="page-container">
       <motion.div
-        className="page-header"
+        className="relative overflow-hidden rounded-3xl mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.8 }}
       >
-        <h1>🔐 مختبر خوارزميات التشفير المتقدم</h1>
-        <p>اختبر وقارن بين أقوى خوارزميات التشفير في العالم</p>
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-purple-600/20 to-cyan-600/20 backdrop-blur-sm" />
+        <div className="relative p-8 text-center">
+          <motion.div
+            className="text-6xl mb-4"
+            animate={{
+              rotate: [0, 5, -5, 0],
+              scale: [1, 1.05, 1],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            🔬
+          </motion.div>
+          <motion.h1
+            className="text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent mb-4"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            مختبر خوارزميات التشفير 2025
+          </motion.h1>
+          <motion.p
+            className="text-xl text-gray-300 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            اختبر وقارن بين أقوى خوارزميات التشفير العسكرية
+          </motion.p>
+          <motion.div
+            className="flex justify-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 text-green-300 text-sm font-medium">
+              <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse inline-block" />
+              4 خوارزميات نشطة
+            </div>
+            <div className="px-4 py-2 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-sm font-medium">
+              مقاوم كمي
+            </div>
+          </motion.div>
+        </div>
       </motion.div>
 
-      {/* Tab Navigation */}
+      {/* Advanced Tab Navigation */}
       <motion.div
-        className="tab-navigation"
+        className="mb-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <div className="glass-card tab-container">
-          {[
-            { id: "overview", label: "📋 نظرة عامة", icon: "📋" },
-            { id: "demo", label: "🧪 تجربة مباشرة", icon: "🧪" },
-            { id: "benchmark", label: "⚡ قياس الأداء", icon: "⚡" },
-            { id: "compare", label: "📊 مقارنة متقدمة", icon: "📊" },
-          ].map((tab) => (
-            <motion.button
-              key={tab.id}
-              className={`tab-button ${selectedTab === tab.id ? "active" : ""}`}
-              onClick={() => setSelectedTab(tab.id as any)}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span className="tab-icon">{tab.icon}</span>
-              <span className="tab-label">{tab.label}</span>
-            </motion.button>
-          ))}
-        </div>
+        <ModernCard variant="hologram" className="p-4">
+          <div className="flex justify-center gap-2">
+            {[
+              {
+                id: "overview",
+                label: "نظرة عامة",
+                icon: "📋",
+                gradient: "from-indigo-500 to-purple-600",
+              },
+              {
+                id: "demo",
+                label: "تجربة مباشرة",
+                icon: "🧪",
+                gradient: "from-emerald-500 to-teal-600",
+              },
+              {
+                id: "benchmark",
+                label: "قياس الأداء",
+                icon: "⚡",
+                gradient: "from-yellow-500 to-orange-600",
+              },
+              {
+                id: "compare",
+                label: "مقارنة متقدمة",
+                icon: "📊",
+                gradient: "from-pink-500 to-red-600",
+              },
+            ].map((tab, index) => (
+              <motion.button
+                key={tab.id}
+                className={`
+                  relative flex items-center gap-3 px-6 py-3 rounded-2xl font-medium transition-all duration-300
+                  ${
+                    selectedTab === tab.id
+                      ? `bg-gradient-to-r ${tab.gradient} text-white shadow-lg`
+                      : "text-gray-300 hover:text-white hover:bg-white/10"
+                  }
+                `}
+                onClick={() => setSelectedTab(tab.id as any)}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+              >
+                <span className="text-xl">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                {selectedTab === tab.id && (
+                  <motion.div
+                    className="absolute inset-0 bg-white/20 rounded-2xl"
+                    layoutId="activeTab"
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            ))}
+          </div>
+        </ModernCard>
       </motion.div>
 
       <div className="algorithms-content">
