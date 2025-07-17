@@ -1,6 +1,6 @@
 /**
  * KnouxCrypt™ - Advanced Encryption Interface
- * واجهة التشفير الموحدة لجميع الخوارزميات
+ * وا��هة التشفير الموحدة لجميع الخوارزميات
  */
 
 import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
@@ -103,7 +103,7 @@ export interface EncryptionOptions {
 export interface EncryptionResult {
   ciphertext: BufferLike;
   iv?: BufferLike;
-  tag?: BufferLike; // ��لـ GCM mode
+  tag?: BufferLike; // للـ GCM mode
   algorithm: string;
   mode: string;
   timestamp: Date;
@@ -173,7 +173,7 @@ export class KeyValidator {
   /**
    * التحقق من قوة المفتاح
    */
-  static validateKeyStrength(key: Buffer): {
+  static validateKeyStrength(key: BufferLike): {
     isValid: boolean;
     strength: "ضعيف" | "متوسط" | "قوي" | "ممتاز";
     issues: string[];
