@@ -10,4 +10,15 @@ export default defineConfig({
   build: {
     outDir: "build/v2",
   },
+  define: {
+    global: "globalThis",
+  },
+  resolve: {
+    alias: {
+      buffer: "buffer",
+    },
+  },
+  optimizeDeps: {
+    include: ["buffer"],
+  },
 });
