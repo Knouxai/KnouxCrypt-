@@ -101,9 +101,9 @@ export interface EncryptionOptions {
  * نتيجة التشفير مع معلومات إضافية
  */
 export interface EncryptionResult {
-  ciphertext: Buffer;
-  iv?: Buffer;
-  tag?: Buffer; // للـ GCM mode
+  ciphertext: BufferLike;
+  iv?: BufferLike;
+  tag?: BufferLike; // ��لـ GCM mode
   algorithm: string;
   mode: string;
   timestamp: Date;
@@ -195,7 +195,7 @@ export class KeyValidator {
     // فحص العشوائية
     const entropy = this.calculateEntropy(key);
     if (entropy < 6) {
-      issues.push("المفتاح يفتقر ل��عشوائية");
+      issues.push("المفتاح يفتقر للعشوائية");
       strength = "ضعيف";
     }
 
