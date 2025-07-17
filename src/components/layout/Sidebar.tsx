@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LocalAIAssistant } from "../UI/LocalAIAssistant";
 import { NeonButton2025 } from "../UI/NeonButton2025";
+import { AboutDialog } from "../UI/AboutDialog";
 
 interface NavigationItem {
   path: string;
