@@ -1,6 +1,7 @@
 {
   "name": "knouxcrypt",
   "version": "1.0.0",
+  "type": "module",
   "description": "KnouxCrypt™ - Disk Encryption Dashboard with Glass UI",
   "main": "index.js",
   "scripts": {
