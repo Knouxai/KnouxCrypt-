@@ -263,16 +263,29 @@ const LivePreview: React.FC = () => {
                       className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() => restartService(currentService.id)}
                     >
                       🔄 إعادة تشغيل
                     </motion.button>
-                    <motion.button
-                      className="flex-1 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      ⚙️ إعدادات
-                    </motion.button>
+                    {currentService.status === "running" ? (
+                      <motion.button
+                        className="flex-1 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => stopService(currentService.id)}
+                      >
+                        ⏹️ إيقاف
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        className="flex-1 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => startService(currentService.id)}
+                      >
+                        ▶️ تشغيل
+                      </motion.button>
+                    )}
                   </div>
                 </div>
 
