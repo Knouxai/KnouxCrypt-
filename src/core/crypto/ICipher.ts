@@ -14,14 +14,14 @@ export interface ICipher {
    * @param data البيانات المراد تشفيرها (نص أو Buffer)
    * @returns البيانات المشفرة
    */
-  encrypt(data: string | Buffer): Buffer;
+  encrypt(data: string | BufferLike): BufferLike;
 
   /**
    * 🔓 فك تشفير البيانات
    * @param encryptedData البيانات المشفرة
    * @returns البيانات الأصلية
    */
-  decrypt(encryptedData: Buffer): string | Buffer;
+  decrypt(encryptedData: BufferLike): string | BufferLike;
 
   /**
    * 📏 حجم البلوك بالبايت
@@ -44,7 +44,7 @@ export interface ICipher {
   readonly rounds: number;
 
   /**
-   * �� معلومات الخوارزمية
+   * 📊 معلومات الخوارزمية
    */
   getInfo(): CipherInfo;
 }
