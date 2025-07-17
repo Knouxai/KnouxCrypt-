@@ -170,6 +170,23 @@ export const ModernNavbar: React.FC = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
+        {/* Live Preview Link */}
+        <motion.a
+          href="/live-preview"
+          className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/30 hover:to-purple-600/30 border border-blue-500/30 rounded-lg text-sm font-medium text-white transition-all duration-300"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          title="واجهة المراقبة المباشرة الجديدة"
+        >
+          <span className="text-lg">📺</span>
+          <span>مراقبة مباشرة</span>
+          <motion.div
+            className="w-1.5 h-1.5 bg-red-500 rounded-full"
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+        </motion.a>
+
         {/* Crypto Test Button */}
         <CryptoTestButton />
 
