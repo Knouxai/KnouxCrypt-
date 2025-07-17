@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSecurityContext } from "../../context/SecurityContext";
+import { useSecurity } from "../../context/SecurityContext";
 import AIRecommendationsCard from "../dashboard/AIRecommendationsCard";
 
 interface Disk {
@@ -24,7 +24,7 @@ export const DiskManager: React.FC = () => {
     decryptDisk,
     mountVolume,
     unmountVolume,
-  } = useSecurityContext();
+  } = useSecurity();
   const [selectedDisk, setSelectedDisk] = useState<Disk | null>(null);
   const [showEncryptDialog, setShowEncryptDialog] = useState(false);
 
