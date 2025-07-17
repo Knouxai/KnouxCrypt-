@@ -11,9 +11,13 @@ import {
   CipherErrorCodes,
   SecureKeyGenerator,
 } from "./ICipher";
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
 import { AESCipher } from "./AESCipher";
 import { SerpentCipher } from "./SerpentCipher";
 import { TwofishCipher } from "./TwofishCipher";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
 
 export class TripleCipher implements ICipher {
   public readonly blockSize = 16; // 128 bits
@@ -25,12 +29,12 @@ export class TripleCipher implements ICipher {
   private readonly serpentCipher: SerpentCipher;
   private readonly twofishCipher: TwofishCipher;
   private readonly keys: {
-    aesKey: Buffer;
-    serpentKey: Buffer;
-    twofishKey: Buffer;
+    aesKey: BufferLike;
+    serpentKey: BufferLike;
+    twofishKey: BufferLike;
   };
 
-  constructor(key: Buffer) {
+  constructor(key: BufferLike) {
     if (key.length !== 32 && key.length !== 64 && key.length !== 96) {
       throw new CipherError(
         `🔑 المفتاح يجب أن يكون 32، 64، أو 96 بايت، المعطى: ${key.length} بايت`,
@@ -45,18 +49,23 @@ export class TripleCipher implements ICipher {
     }
     // إذا كان المفتاح 64 بايت، نستخدم الأول للـ AES والثاني نشتق منه مفتاحين
     else if (key.length === 64) {
+      const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
       this.keys = {
-        aesKey: key.slice(0, 32),
-        serpentKey: key.slice(32, 64),
-        twofishKey: this.deriveKey(key.slice(32, 64), "Twofish"),
+        aesKey: createBuffer(keyData.slice(0, 32)),
+        serpentKey: createBuffer(keyData.slice(32, 64)),
+        twofishKey: this.deriveKey(
+          createBuffer(keyData.slice(32, 64)),
+          "Twofish",
+        ),
       };
     }
     // إذا كان المفتاح 96 بايت، نستخدم كل 32 بايت لخوارزمية
     else {
+      const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
       this.keys = {
-        aesKey: key.slice(0, 32),
-        serpentKey: key.slice(32, 64),
-        twofishKey: key.slice(64, 96),
+        aesKey: createBuffer(keyData.slice(0, 32)),
+        serpentKey: createBuffer(keyData.slice(32, 64)),
+        twofishKey: createBuffer(keyData.slice(64, 96)),
       };
     }
 
@@ -70,9 +79,10 @@ export class TripleCipher implements ICipher {
    * 🔐 التشفير الثلاثي المتتالي
    * المسار: النص الأصلي → AES → Serpent → Twofish → النص المشفر
    */
-  encrypt(data: string | Buffer): Buffer {
+  encrypt(data: string | BufferLike): BufferLike {
     try {
-      const input = typeof data === "string" ? Buffer.from(data, "utf8") : data;
+      const input =
+        typeof data === "string" ? createBuffer(data, "utf8") : data;
 
       console.log(`🔐 بدء التشفير الثلاثي للبيانات (${input.length} بايت)`);
 
@@ -106,7 +116,7 @@ export class TripleCipher implements ICipher {
    * 🔓 فك التشفير الثلاثي العكسي
    * المسار: النص المشفر → Twofish⁻¹ → Serpent⁻¹ → AES⁻¹ → النص الأصلي
    */
-  decrypt(encryptedData: Buffer): string {
+  decrypt(encryptedData: BufferLike): string | BufferLike {
     try {
       console.log(
         `🔓 بدء فك التشفير الثلاثي للبيانات (${encryptedData.length} بايت)`,
@@ -171,7 +181,7 @@ export class TripleCipher implements ICipher {
         "بطء كبير (3-4 أضعاف AES)",
         "استهلاك ذاكرة مرتفع",
         "تعقيد في التطبيق",
-        "زيادة في حجم البيانات المشفرة",
+        "��يادة في حجم البيانات المشفرة",
         "استهلاك طاقة أعلى",
         "يحتاج موارد حاسوبية أكثر",
       ],
@@ -196,15 +206,15 @@ export class TripleCipher implements ICipher {
   /**
    * اشتقاق ثلاثة مفاتيح من مفتاح واحد
    */
-  private deriveTripleKeys(masterKey: Buffer): {
-    aesKey: Buffer;
-    serpentKey: Buffer;
-    twofishKey: Buffer;
+  private deriveTripleKeys(masterKey: BufferLike): {
+    aesKey: BufferLike;
+    serpentKey: BufferLike;
+    twofishKey: BufferLike;
   } {
     // استخدام HKDF مبسط لاشتقاق المفاتيح
-    const salt1 = Buffer.from("KnouxCrypt-AES-Salt-2024", "utf8");
-    const salt2 = Buffer.from("KnouxCrypt-Serpent-Salt-2024", "utf8");
-    const salt3 = Buffer.from("KnouxCrypt-Twofish-Salt-2024", "utf8");
+    const salt1 = createBuffer("KnouxCrypt-AES-Salt-2024", "utf8");
+    const salt2 = createBuffer("KnouxCrypt-Serpent-Salt-2024", "utf8");
+    const salt3 = createBuffer("KnouxCrypt-Twofish-Salt-2024", "utf8");
 
     return {
       aesKey: SecureKeyGenerator.deriveKeyFromPassword(
@@ -231,8 +241,8 @@ export class TripleCipher implements ICipher {
   /**
    * اشتقاق مفتاح محدد
    */
-  private deriveKey(baseKey: Buffer, algorithm: string): Buffer {
-    const salt = Buffer.from(`KnouxCrypt-${algorithm}-Derived-2024`, "utf8");
+  private deriveKey(baseKey: BufferLike, algorithm: string): BufferLike {
+    const salt = createBuffer(`KnouxCrypt-${algorithm}-Derived-2024`, "utf8");
     return SecureKeyGenerator.deriveKeyFromPassword(
       baseKey.toString("hex"),
       salt,
@@ -244,14 +254,14 @@ export class TripleCipher implements ICipher {
   /**
    * إنشاء مفتاح ثلاثي آمن
    */
-  static generateSecureTripleKey(): Buffer {
+  static generateSecureTripleKey(): BufferLike {
     return SecureKeyGenerator.generateSecureKey(96); // 768 bits
   }
 
   /**
    * تقييم قوة المفتاح الثلاثي
    */
-  static evaluateKeyStrength(key: Buffer): {
+  static evaluateKeyStrength(key: BufferLike): {
     overallStrength: "ضعيف" | "متوسط" | "قوي" | "استثنائي";
     individualStrengths: {
       aes: string;
@@ -316,7 +326,7 @@ export class TripleCipher implements ICipher {
   /**
    * تقييم مفتاح واحد
    */
-  private static evaluateSingleKey(key: Buffer) {
+  private static evaluateSingleKey(key: BufferLike) {
     // استخدام نفس منطق التقييم من ICipher
     const issues: string[] = [];
     let strength: "ضعيف" | "متوسط" | "قوي" | "ممتاز" = "ضعيف";
@@ -327,9 +337,10 @@ export class TripleCipher implements ICipher {
       strength = "ممتاز";
     }
 
-    // فحص العشوائية المبسط
-    const uniqueBytes = new Set(Array.from(key)).size;
-    if (uniqueBytes < key.length * 0.7) {
+    // فحص العشوائ��ة المبسط
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
+    const uniqueBytes = new Set(Array.from(keyData)).size;
+    if (uniqueBytes < keyData.length * 0.7) {
       issues.push("المفتاح يفتقر للتنوع");
       strength = "متوسط";
     }
@@ -389,7 +400,7 @@ export class TripleCipher implements ICipher {
     const steps: any[] = [];
 
     // تشفير مع تتبع الخطوات
-    const input = Buffer.from(data, "utf8");
+    const input = createBuffer(data, "utf8");
 
     steps.push({
       step: "البداية",
