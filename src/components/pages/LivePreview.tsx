@@ -296,7 +296,29 @@ const LivePreview: React.FC = () => {
                       مقاييس الأداء
                     </h4>
                     <div className="space-y-4">
-                      {currentService.metrics.map((metric, index) => (
+                      {[
+                        {
+                          name: "CPU",
+                          value: currentService.cpu,
+                          unit: "%",
+                          color: "#3B82F6",
+                          max: 100,
+                        },
+                        {
+                          name: "الذاكرة",
+                          value: currentService.memory,
+                          unit: "%",
+                          color: "#8B5CF6",
+                          max: 100,
+                        },
+                        {
+                          name: "العمليات",
+                          value: currentService.operations,
+                          unit: "/s",
+                          color: "#10B981",
+                          max: 3000,
+                        },
+                      ].map((metric, index) => (
                         <motion.div
                           key={metric.name}
                           className="space-y-2"
@@ -316,7 +338,9 @@ const LivePreview: React.FC = () => {
                               className="h-full rounded-full"
                               style={{ backgroundColor: metric.color }}
                               initial={{ width: 0 }}
-                              animate={{ width: `${metric.value}%` }}
+                              animate={{
+                                width: `${Math.min((metric.value / metric.max) * 100, 100)}%`,
+                              }}
                               transition={{ duration: 1, delay: index * 0.2 }}
                             />
                           </div>
