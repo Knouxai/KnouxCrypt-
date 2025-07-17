@@ -167,7 +167,7 @@ export const CipherErrorCodes = {
 } as const;
 
 /**
- * أداة مساعدة للتحقق من صحة المفاتيح
+ * أداة مساع��ة للتحقق من صحة المفاتيح
  */
 export class KeyValidator {
   /**
@@ -213,7 +213,7 @@ export class KeyValidator {
   }
 
   /**
-   * حساب الإنتروبيا (العشوائية)
+   * حساب الإنتروبي�� (العشوائية)
    */
   private static calculateEntropy(data: BufferLike): number {
     const freq = new Map<number, number>();
@@ -237,16 +237,33 @@ export class KeyValidator {
    * فحص الأنماط المتكررة
    */
   private static hasRepeatingPatterns(data: BufferLike): boolean {
+    const uint8Data =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+
     for (
       let patternSize = 2;
-      patternSize <= Math.min(8, data.length / 4);
+      patternSize <= Math.min(8, uint8Data.length / 4);
       patternSize++
     ) {
-      for (let i = 0; i <= data.length - patternSize * 2; i++) {
-        const pattern = data.slice(i, i + patternSize);
-        const nextPattern = data.slice(i + patternSize, i + patternSize * 2);
-        if (pattern.equals(nextPattern)) {
-          return true;
+      for (let i = 0; i <= uint8Data.length - patternSize * 2; i++) {
+        const pattern = uint8Data.slice(i, i + patternSize);
+        const nextPattern = uint8Data.slice(
+          i + patternSize,
+          i + patternSize * 2,
+        );
+
+        // Compare arrays manually
+        let areEqual = true;
+        if (pattern.length === nextPattern.length) {
+          for (let j = 0; j < pattern.length; j++) {
+            if (pattern[j] !== nextPattern[j]) {
+              areEqual = false;
+              break;
+            }
+          }
+          if (areEqual) {
+            return true;
+          }
         }
       }
     }
