@@ -3,18 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSecurity } from "../../context/SecurityContext";
 import AIRecommendationsCard from "../dashboard/AIRecommendationsCard";
 
-interface Disk {
-  letter: string;
-  label: string;
-  filesystem: string;
-  size: string;
-  used: string;
-  available: string;
-  encrypted: boolean;
-  mounted: boolean;
-  deviceType: "hdd" | "ssd" | "usb" | "optical";
-}
-
 export const DiskManager: React.FC = () => {
   const {
     disks,
@@ -26,46 +14,64 @@ export const DiskManager: React.FC = () => {
     encryptionState,
     decryptionState,
     mountState,
+    selectedDisk,
+    setSelectedDisk,
   } = useSecurity();
-  const [selectedDisk, setSelectedDisk] = useState<Disk | null>(null);
+
   const [showEncryptDialog, setShowEncryptDialog] = useState(false);
 
   useEffect(() => {
     refreshDisks();
   }, [refreshDisks]);
 
-  const handleEncryptDisk = async (disk: Disk) => {
+  const handleEncryptDisk = (disk: any) => {
     setSelectedDisk(disk);
     setShowEncryptDialog(true);
   };
 
   const confirmEncryption = async (password: string, algorithm: string) => {
     if (selectedDisk) {
-      await encryptDisk(selectedDisk.letter, password, algorithm);
+      await startEncryption(selectedDisk, password, { algorithm });
       setShowEncryptDialog(false);
       setSelectedDisk(null);
     }
   };
 
-  const getDeviceIcon = (type: string) => {
-    switch (type) {
-      case "ssd":
-        return "💾";
-      case "hdd":
-        return "💿";
-      case "usb":
-        return "🔌";
-      case "optical":
-        return "📀";
+  const getDeviceIcon = (driveType: number) => {
+    switch (driveType) {
+      case 3:
+        return "💿"; // Fixed disk
+      case 2:
+        return "💾"; // Removable
+      case 5:
+        return "📀"; // CD-ROM
       default:
         return "💽";
     }
   };
 
-  const getEncryptionStatus = (encrypted: boolean) => {
-    return encrypted
+  const getEncryptionStatus = (status: string) => {
+    return status === "encrypted"
       ? { icon: "🔒", text: "مشفر", color: "#059669" }
       : { icon: "🔓", text: "غير مشفر", color: "#DC2626" };
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const isOperating = (diskCaption: string) => {
+    return (
+      (encryptionState.targetDisk === diskCaption &&
+        encryptionState.isRunning) ||
+      (decryptionState.targetDisk === diskCaption &&
+        decryptionState.isRunning) ||
+      (mountState.targetDisk === diskCaption && mountState.isRunning)
+    );
   };
 
   return (
@@ -78,24 +84,22 @@ export const DiskManager: React.FC = () => {
       >
         <h1>إدارة الأقراص والتشفير</h1>
         <p>تشفير وإدارة جميع الأقراص الداخلية والخارجية</p>
-        <button
-          className="refresh-btn"
-          onClick={refreshDisks}
-          disabled={operations.refreshing}
-        >
-          {operations.refreshing ? "🔄 جاري التحديث..." : "🔄 تحديث"}
+        <button className="refresh-btn" onClick={refreshDisks} disabled={false}>
+          🔄 تحديث
         </button>
       </motion.div>
 
       <div className="disk-manager-content">
         {/* AI Recommendations */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <AIRecommendationsCard />
-        </motion.div>
+        {selectedDisk && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <AIRecommendationsCard />
+          </motion.div>
+        )}
 
         {/* Disks Grid */}
         <motion.div
@@ -107,31 +111,28 @@ export const DiskManager: React.FC = () => {
           <h3>الأقراص المتاحة</h3>
           <div className="disks-grid">
             {disks.map((disk, index) => {
-              const status = getEncryptionStatus(disk.encrypted);
-              const isOperating =
-                operations.encrypting === disk.letter ||
-                operations.decrypting === disk.letter ||
-                operations.mounting === disk.letter ||
-                operations.unmounting === disk.letter;
+              const status = getEncryptionStatus(disk.encryptionStatus);
+              const operating = isOperating(disk.caption);
 
               return (
                 <motion.div
-                  key={disk.letter}
-                  className={`glass-card disk-card ${disk.encrypted ? "encrypted" : "unencrypted"}`}
+                  key={disk.caption}
+                  className={`glass-card disk-card ${disk.encryptionStatus === "encrypted" ? "encrypted" : "unencrypted"}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.6 + index * 0.1 }}
                   whileHover={{ scale: 1.02 }}
+                  onClick={() => setSelectedDisk(disk)}
                 >
                   <div className="disk-header">
                     <div className="disk-icon">
-                      {getDeviceIcon(disk.deviceType)}
+                      {getDeviceIcon(disk.driveType)}
                     </div>
                     <div className="disk-info">
                       <h4>
-                        {disk.letter}: {disk.label}
+                        {disk.caption} {disk.volumeName}
                       </h4>
-                      <span className="disk-type">{disk.filesystem}</span>
+                      <span className="disk-type">{disk.fileSystem}</span>
                     </div>
                     <div
                       className="disk-status"
@@ -144,63 +145,76 @@ export const DiskManager: React.FC = () => {
 
                   <div className="disk-storage">
                     <div className="storage-info">
-                      <span>المساحة الإجمالية: {disk.size}</span>
-                      <span>المستخدم: {disk.used}</span>
-                      <span>المتاح: {disk.available}</span>
+                      <span>المساحة الإجمالية: {formatBytes(disk.size)}</span>
+                      <span>المتاح: {formatBytes(disk.freeSpace)}</span>
                     </div>
                     <div className="storage-bar">
                       <div
                         className="storage-used"
                         style={{
-                          width: `${(parseFloat(disk.used) / parseFloat(disk.size)) * 100}%`,
-                          backgroundColor: disk.encrypted
-                            ? "#059669"
-                            : "#DC2626",
+                          width: `${((disk.size - disk.freeSpace) / disk.size) * 100}%`,
+                          backgroundColor:
+                            disk.encryptionStatus === "encrypted"
+                              ? "#059669"
+                              : "#DC2626",
                         }}
                       />
                     </div>
                   </div>
 
                   <div className="disk-actions">
-                    {!disk.encrypted ? (
+                    {disk.encryptionStatus !== "encrypted" ? (
                       <button
                         className="btn btn-primary"
-                        onClick={() => handleEncryptDisk(disk)}
-                        disabled={isOperating}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEncryptDisk(disk);
+                        }}
+                        disabled={operating}
                       >
-                        {operations.encrypting === disk.letter
-                          ? "🔄 جاري التشفير..."
-                          : "🔒 تشفير"}
+                        {operating ? "🔄 جاري المعالجة..." : "🔒 تشفير"}
                       </button>
                     ) : (
                       <div className="encrypted-actions">
                         {!disk.mounted ? (
                           <button
                             className="btn btn-secondary"
-                            onClick={() => mountVolume(disk.letter)}
-                            disabled={isOperating}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // For now, we'll need a password prompt
+                              const password = prompt("أدخل كلمة المرور:");
+                              if (password) mountVolume(disk, password);
+                            }}
+                            disabled={operating}
                           >
-                            {operations.mounting === disk.letter
-                              ? "🔄 جاري التركيب..."
-                              : "📁 تركيب"}
+                            {operating ? "🔄 جاري التركيب..." : "📁 تركيب"}
                           </button>
                         ) : (
                           <button
                             className="btn btn-secondary"
-                            onClick={() => unmountVolume(disk.letter)}
-                            disabled={isOperating}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              unmountVolume(disk);
+                            }}
+                            disabled={operating}
                           >
-                            {operations.unmounting === disk.letter
+                            {operating
                               ? "🔄 جاري الإلغاء..."
                               : "📤 إلغاء التركيب"}
                           </button>
                         )}
                         <button
                           className="btn btn-danger"
-                          onClick={() => decryptDisk(disk.letter)}
-                          disabled={isOperating}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const password = prompt(
+                              "أدخل كلمة المرور لفك التشفير:",
+                            );
+                            if (password) startDecryption(disk, password);
+                          }}
+                          disabled={operating}
                         >
-                          {operations.decrypting === disk.letter
+                          {operating
                             ? "🔄 جاري فك التشفير..."
                             : "🔓 فك التشفير"}
                         </button>
@@ -208,12 +222,21 @@ export const DiskManager: React.FC = () => {
                     )}
                   </div>
 
-                  {isOperating && (
+                  {operating && (
                     <div className="operation-progress">
                       <div className="progress-bar">
-                        <div className="progress-fill" />
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${encryptionState.progress || decryptionState.progress || mountState.progress}%`,
+                          }}
+                        />
                       </div>
-                      <span>جاري المعالجة...</span>
+                      <span>
+                        {encryptionState.message ||
+                          decryptionState.message ||
+                          mountState.message}
+                      </span>
                     </div>
                   )}
                 </motion.div>
@@ -238,7 +261,7 @@ export const DiskManager: React.FC = () => {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 50 }}
             >
-              <h3>تشفير القرص {selectedDisk.letter}:</h3>
+              <h3>تشفير القرص {selectedDisk.caption}:</h3>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
