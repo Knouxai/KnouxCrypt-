@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSecurityContext } from "../../context/SecurityContext";
-import { AIRecommendationsCard } from "../dashboard/AIRecommendationsCard";
+import AIRecommendationsCard from "../dashboard/AIRecommendationsCard";
 
 interface Disk {
   letter: string;
