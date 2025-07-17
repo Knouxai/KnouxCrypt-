@@ -34,17 +34,29 @@ const LivePreview: React.FC = () => {
     { icon: "🔧", name: "التكوين", value: "Enterprise Grade" },
   ];
 
-  // Simulate live metrics updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLiveMetrics((prev) => ({
-        ...prev,
-        [selectedService]: Math.random() * 100,
-      }));
-    }, 2000);
+  // Helper functions
+  const formatUptime = (uptime: number): string => {
+    const hours = Math.floor(uptime / 3600000);
+    const minutes = Math.floor((uptime % 3600000) / 60000);
+    const seconds = Math.floor((uptime % 60000) / 1000);
 
-    return () => clearInterval(interval);
-  }, [selectedService]);
+    if (hours > 0) return `${hours}س ${minutes}د`;
+    if (minutes > 0) return `${minutes}د ${seconds}ث`;
+    return `${seconds}ث`;
+  };
+
+  const formatLastActivity = (date: Date): string => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) return `منذ ${hours} ساعة`;
+    if (minutes > 0) return `منذ ${minutes} دقيقة`;
+    if (seconds > 0) return `منذ ${seconds} ثانية`;
+    return "نشط الآن";
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
