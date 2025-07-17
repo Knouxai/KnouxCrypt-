@@ -1,8 +1,14 @@
 // Set up Buffer polyfill for browser compatibility
-import { Buffer } from "buffer";
 if (typeof window !== "undefined") {
-  window.Buffer = Buffer;
-  window.global = window;
+  import("buffer")
+    .then(({ Buffer }) => {
+      window.Buffer = Buffer;
+      window.global = window;
+    })
+    .catch(() => {
+      // Fallback if buffer import fails
+      console.warn("Buffer polyfill not available");
+    });
 }
 
 import React from "react";
