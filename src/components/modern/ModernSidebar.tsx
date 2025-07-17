@@ -28,7 +28,7 @@ export const ModernSidebar: React.FC = () => {
           path: "/",
           icon: "🏠",
           label: "لوحة التحكم",
-          description: "نظرة عامة على النظام",
+          description: "نظرة عامة عل�� النظام",
           shortcut: "Ctrl+H",
         },
         {
@@ -126,6 +126,14 @@ export const ModernSidebar: React.FC = () => {
           description: "عرض مباشر للخدمات",
           badge: "مباشر",
           shortcut: "Ctrl+P",
+        },
+        {
+          path: "/vmware",
+          icon: "💻",
+          label: "VMware Workstation",
+          description: "إدارة الأجهزة الافتراضية",
+          badge: "جديد",
+          shortcut: "Ctrl+V",
         },
       ],
     },
