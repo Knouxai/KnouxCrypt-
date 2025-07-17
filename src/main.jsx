@@ -1,6 +1,9 @@
 // Set up Buffer polyfill for browser compatibility
 import { Buffer } from "buffer";
-window.Buffer = Buffer;
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+  window.global = window;
+}
 
 import React from "react";
 import ReactDOM from "react-dom/client";
