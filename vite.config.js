@@ -32,4 +32,22 @@ export default defineConfig({
   optimizeDeps: {
     include: ["buffer"],
   },
+  build: {
+    ...{
+      outDir: "build",
+      assetsDir: "assets",
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ["react", "react-dom"],
+            motion: ["framer-motion"],
+            router: ["react-router-dom"],
+          },
+        },
+      },
+    },
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
 });
