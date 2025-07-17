@@ -7,102 +7,110 @@ import React, {
   ReactNode,
 } from "react";
 
-// تعريف أنواع البيانات الأساسية
+// Enhanced interfaces for comprehensive disk management and AI integration
+export interface SystemInfo {
+  platform: string;
+  release: string;
+  arch: string;
+  totalMemory: number;
+  freeMemory: number;
+  cpus: any[];
+  uefiSecureBoot: boolean;
+  drives: DiskInfo[];
+  veracryptInstalled: boolean;
+  timestamp: number;
+}
+
 export interface DiskInfo {
   caption: string;
-  size: number;
-  freeSpace: number;
-  fileSystem: string;
-  driveType: number;
   volumeName?: string;
-  description: string;
+  fileSystem?: string;
+  size: number; // Bytes
+  freeSpace: number; // Bytes
+  driveType: number; // Windows Disk Type (2=Fixed, 3=Network, 7=Removable, etc.)
+  mounted: boolean;
+  mountLetter?: string; // If mounted, what drive letter?
   encryptionStatus:
     | "unencrypted"
     | "encrypted"
-    | "processing"
     | "preparing"
-    | "mounted"
-    | "unmounted";
-  deviceID: string;
+    | "processing"
+    | "unknown";
+  description?: string;
+  deviceID?: string;
   mediaType?: string;
 }
 
+export interface AICalculatedParams {
+  algorithm: string;
+  password_strength_score: number;
+  suggest_usb_key: boolean;
+  suggest_hidden_volume: boolean;
+  explanation: string;
+  confidence_score: number;
+  security_focus_factor?: number;
+  ai_run_time_ms?: number;
+  error?: string;
+}
+
 export interface EncryptionSettings {
-  algorithm: "AES-256" | "Serpent" | "Twofish" | "AES-Serpent-Twofish";
-  password: string;
-  keyFiles?: string[];
-  hashAlgorithm: "SHA-512" | "SHA-256" | "Whirlpool";
-  filesystem: "NTFS" | "FAT32" | "exFAT";
-  quickFormat: boolean;
-  systemEncryption: boolean;
+  algorithm: string;
+  useUsbKey: boolean;
+  usbKeyPath?: string;
   hiddenVolume: boolean;
-  volumeSize?: number;
+  preferredAlgorithms: string[];
+  quickFormat?: boolean;
+  filesystem?: string;
 }
 
 export interface OperationState {
-  progress: number; // 0-100
+  isRunning: boolean;
+  progress: number;
   status: string;
   message: string;
-  isRunning: boolean;
-  success?: boolean;
-  targetDisk?: string | null;
-  operationType:
-    | "encryption"
-    | "decryption"
-    | "mount"
-    | "unmount"
-    | "ai-analysis"
-    | "none";
+  operationType: "none" | "encryption" | "decryption" | "mount" | "unmount";
+  targetDisk?: string;
   startTime?: Date;
   estimatedTimeRemaining?: number;
 }
 
-export interface AIRecommendation {
-  algorithm: string;
-  passwordStrengthScore: number;
-  suggestUsbKey: boolean;
-  suggestHiddenVolume: boolean;
-  explanation: string;
-  confidenceScore: number;
-  securityLevel: "basic" | "high" | "military";
-  performanceImpact: "low" | "medium" | "high";
-}
-
-export interface SystemContext {
-  os: string;
-  architecture: string;
-  totalRAM: number;
-  uefiSecureBoot: boolean;
-  tpmVersion?: string;
-  hasHardwareEncryption: boolean;
-}
-
-// تعريف نوع Context
+// Enhanced Context Type with comprehensive functionality
 interface SecurityContextType {
-  // الحالات الأساسية
+  // Authentication (preserved from original)
+  user: any | null;
+  isAuthenticated: boolean;
+  login?: (credentials: any) => Promise<boolean>;
+  logout?: () => void;
+
+  // System Info
+  systemInfo: SystemInfo | null;
+  loadSystemInfo: () => Promise<void>;
+
+  // Disk Management
   disks: DiskInfo[];
   selectedDisk: DiskInfo | null;
-  encryptionSettings: EncryptionSettings;
-  systemContext: SystemContext;
-  mountedVolumes: Record<string, string>;
+  setSelectedDisk: (disk: DiskInfo | null) => void;
+  refreshDisks: () => Promise<void>;
+  mountedVolumes: { [driveLetter: string]: DiskInfo["caption"] };
 
-  // حالات العمليات
+  // Operation States
   encryptionState: OperationState;
   decryptionState: OperationState;
   mountState: OperationState;
-  aiAnalysisState: OperationState;
 
-  // توصيات الذكاء الاصطناعي
-  aiRecommendations: AIRecommendation | null;
+  // AI State
+  aiRecommendations: AICalculatedParams | null;
   isLoadingAI: boolean;
 
-  // الوظائف
-  setSelectedDisk: (disk: DiskInfo | null) => void;
-  updateEncryptionSettings: (settings: Partial<EncryptionSettings>) => void;
-  scanDisks: () => Promise<void>;
+  // User Preferences
+  encryptionPreferences: EncryptionSettings;
+  setEncryptionPreferences: (prefs: Partial<EncryptionSettings>) => void;
+
+  // Core Methods
   startEncryption: (
     disk: DiskInfo,
-    params: Partial<EncryptionSettings>,
+    password: string,
+    settings?: Partial<EncryptionSettings>,
   ) => Promise<void>;
   startDecryption: (disk: DiskInfo, password: string) => Promise<void>;
   mountVolume: (
@@ -111,79 +119,76 @@ interface SecurityContextType {
     driveLetter?: string,
   ) => Promise<void>;
   unmountVolume: (disk: DiskInfo) => Promise<void>;
-  getAIRecommendations: (disk: DiskInfo) => Promise<void>;
-  updateOperationState: (
+  aiAnalysisForDisk: (disk: DiskInfo) => Promise<void>;
+
+  // Legacy methods for compatibility
+  scanDisks?: () => Promise<void>;
+  getAIRecommendations?: (disk: DiskInfo) => Promise<void>;
+  updateOperationState?: (
     type: OperationState["operationType"],
     stateUpdate: Partial<OperationState>,
   ) => void;
-  resetOperationState: (type: OperationState["operationType"]) => void;
 }
 
-// إنشاء Context
+// Create Context
 const SecurityContext = createContext<SecurityContextType | undefined>(
   undefined,
 );
 
-// الحالة الافتراضية للعمليات
-const defaultOperationState: OperationState = {
-  progress: 0,
-  status: "Idle",
-  message: "",
-  isRunning: false,
-  operationType: "none",
-};
-
-// الإعدادات الافتراضية للتشفير
-const defaultEncryptionSettings: EncryptionSettings = {
-  algorithm: "AES-256",
-  password: "",
-  hashAlgorithm: "SHA-512",
-  filesystem: "NTFS",
-  quickFormat: false,
-  systemEncryption: false,
-  hiddenVolume: false,
-};
-
-// Provider Component
+// Provider Component with enhanced functionality
 export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  // الحالات الأساسية
+  // Authentication states (basic implementation)
+  const [user, setUser] = useState<any | null>(null);
+
+  // System and disk states
+  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [disks, setDisks] = useState<DiskInfo[]>([]);
   const [selectedDisk, setSelectedDisk] = useState<DiskInfo | null>(null);
-  const [encryptionSettings, setEncryptionSettings] =
-    useState<EncryptionSettings>(defaultEncryptionSettings);
-  const [mountedVolumes, setMountedVolumes] = useState<Record<string, string>>(
-    {},
-  );
-  const [systemContext, setSystemContext] = useState<SystemContext>({
-    os: "Windows 11",
-    architecture: "x64",
-    totalRAM: 16,
-    uefiSecureBoot: true,
-    hasHardwareEncryption: false,
-  });
+  const [mountedVolumes, setMountedVolumes] = useState<{
+    [driveLetter: string]: DiskInfo["caption"];
+  }>({});
 
-  // حالات العمليات
-  const [encryptionState, setEncryptionState] = useState<OperationState>(
-    defaultOperationState,
-  );
-  const [decryptionState, setDecryptionState] = useState<OperationState>(
-    defaultOperationState,
-  );
-  const [mountState, setMountState] = useState<OperationState>(
-    defaultOperationState,
-  );
-  const [aiAnalysisState, setAiAnalysisState] = useState<OperationState>(
-    defaultOperationState,
-  );
-
-  // حالة الذكاء الاصطناعي
-  const [aiRecommendations, setAiRecommendations] =
-    useState<AIRecommendation | null>(null);
+  // AI states
+  const [aiRecommendations, setAIRecommendations] =
+    useState<AICalculatedParams | null>(null);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
 
-  // تحديث حالة العمليات
+  // Operation states initialization
+  const initialOperationState: OperationState = {
+    isRunning: false,
+    progress: 0,
+    status: "Idle",
+    message: "",
+    operationType: "none",
+  };
+
+  const [encryptionState, setEncryptionState] = useState<OperationState>(
+    initialOperationState,
+  );
+  const [decryptionState, setDecryptionState] = useState<OperationState>(
+    initialOperationState,
+  );
+  const [mountState, setMountState] = useState<OperationState>(
+    initialOperationState,
+  );
+
+  // User preferences
+  const [encryptionPreferences, setEncryptionPreferences] =
+    useState<EncryptionSettings>({
+      algorithm: "AES-256",
+      preferredAlgorithms: ["AES-256", "Serpent", "AES-Serpent-Twofish"],
+      useUsbKey: false,
+      hiddenVolume: false,
+      usbKeyPath: "",
+      quickFormat: true,
+      filesystem: "NTFS",
+    });
+
+  const isAuthenticated = user !== null;
+
+  // Helper to update specific operation state
   const updateOperationState = useCallback(
     (
       type: OperationState["operationType"],
@@ -201,13 +206,9 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
         case "unmount":
           setter = setMountState;
           break;
-        case "ai-analysis":
-          setter = setAiAnalysisState;
-          break;
         default:
           return;
       }
-
       setter((prevState) => {
         const newState = { ...prevState, ...stateUpdate };
         if (
@@ -218,124 +219,219 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
         ) {
           newState.isRunning = false;
         }
-        if (!newState.operationType && type !== "none") {
+        if (type !== "none" && newState.operationType === "none")
           newState.operationType = type;
-        }
         return newState;
       });
     },
     [],
   );
 
-  // إعادة تعيين حالة العمليات
-  const resetOperationState = useCallback(
-    (type: OperationState["operationType"]) => {
-      updateOperationState(type, {
-        ...defaultOperationState,
-        operationType: type,
+  // Basic authentication methods
+  const login = async (credentials: any): Promise<boolean> => {
+    try {
+      // Mock authentication - replace with actual implementation
+      if (
+        credentials.username === "admin" &&
+        credentials.password === "admin"
+      ) {
+        setUser({ id: "1", username: "admin", role: "admin" });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    // Clear sensitive data on logout
+    setSelectedDisk(null);
+    setAIRecommendations(null);
+    setMountedVolumes({});
+  };
+
+  // Load system information
+  const loadSystemInfo = async () => {
+    try {
+      if (window.electronAPI) {
+        const info = await window.electronAPI.invoke("get-system-info");
+        setSystemInfo(info);
+        if (info?.drives) {
+          setDisks(info.drives);
+        }
+      } else {
+        // Fallback mock data for development
+        const mockSystemInfo: SystemInfo = {
+          platform: "win32",
+          release: "10.0.22000",
+          arch: "x64",
+          totalMemory: 16 * 1024 * 1024 * 1024,
+          freeMemory: 8 * 1024 * 1024 * 1024,
+          cpus: [],
+          uefiSecureBoot: true,
+          drives: [
+            {
+              caption: "C:",
+              size: 500 * 1024 * 1024 * 1024,
+              freeSpace: 200 * 1024 * 1024 * 1024,
+              fileSystem: "NTFS",
+              driveType: 3,
+              volumeName: "Windows",
+              description: "Local Fixed Disk",
+              encryptionStatus: "unencrypted",
+              mounted: false,
+              deviceID: "\\\\.\\PHYSICALDRIVE0",
+            },
+            {
+              caption: "D:",
+              size: 1000 * 1024 * 1024 * 1024,
+              freeSpace: 800 * 1024 * 1024 * 1024,
+              fileSystem: "NTFS",
+              driveType: 3,
+              volumeName: "Data",
+              description: "Local Fixed Disk",
+              encryptionStatus: "unencrypted",
+              mounted: false,
+              deviceID: "\\\\.\\PHYSICALDRIVE1",
+            },
+          ],
+          veracryptInstalled: false,
+          timestamp: Date.now(),
+        };
+        setSystemInfo(mockSystemInfo);
+        setDisks(mockSystemInfo.drives);
+      }
+    } catch (error) {
+      console.error("Failed to load system info:", error);
+    }
+  };
+
+  // Method to fetch and refresh disk list and their statuses
+  const refreshDisks = useCallback(async () => {
+    console.log("Context: Refreshing disks...");
+    try {
+      if (window.electronAPI) {
+        const systemData = await window.electronAPI.invoke("get-system-info");
+        const fetchedDisks: DiskInfo[] = systemData?.drives || [];
+
+        // Update disk statuses: Check mounted status for each disk
+        const currentMountedLetters = Object.keys(mountedVolumes);
+        const updatedDisks = fetchedDisks.map((disk) => {
+          const isMounted = currentMountedLetters.some(
+            (letter) => mountedVolumes[letter] === disk.caption,
+          );
+          let encryptionStatus: DiskInfo["encryptionStatus"] = "unknown";
+
+          if (isMounted) {
+            disk.mounted = true;
+            disk.mountLetter = currentMountedLetters.find(
+              (letter) => mountedVolumes[letter] === disk.caption,
+            );
+            encryptionStatus = "encrypted"; // Assume mounted is encrypted
+          } else {
+            disk.mounted = false;
+            disk.mountLetter = undefined;
+          }
+
+          disk.encryptionStatus = encryptionStatus || "unencrypted";
+          return disk;
+        });
+
+        setDisks(updatedDisks);
+        if (systemData) {
+          setSystemInfo(systemData);
+        }
+      } else {
+        // Use existing disks for development
+        console.log("Development mode: Using existing disk data");
+      }
+    } catch (error) {
+      console.error("Failed to refresh disks:", error);
+    }
+  }, [mountedVolumes]);
+
+  // AI analysis initiator
+  const aiAnalysisForDisk = async (disk: DiskInfo) => {
+    if (!disk || isLoadingAI) return;
+    setIsLoadingAI(true);
+    setAIRecommendations(null);
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.invoke("run-ai-analysis", disk);
+      } else {
+        // Mock AI analysis for development
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const mockRecommendations: AICalculatedParams = {
+          algorithm: disk.caption === "C:" ? "AES-Serpent-Twofish" : "AES-256",
+          password_strength_score: disk.caption === "C:" ? 95 : 80,
+          suggest_usb_key: disk.caption === "C:",
+          suggest_hidden_volume: disk.size > 500 * 1024 * 1024 * 1024,
+          explanation:
+            disk.caption === "C:"
+              ? "System disk requires maximum security. Triple encryption recommended."
+              : "Balanced security approach suitable for data storage.",
+          confidence_score: 0.85,
+          ai_run_time_ms: 2000,
+        };
+        setAIRecommendations(mockRecommendations);
+        setIsLoadingAI(false);
+      }
+    } catch (error) {
+      console.error("Error initiating AI analysis:", error);
+      setIsLoadingAI(false);
+      setAIRecommendations({
+        error: "Failed to initiate AI analysis.",
+        algorithm: "Error",
+        password_strength_score: 0,
+        suggest_usb_key: false,
+        suggest_hidden_volume: false,
+        explanation: "AI analysis could not be completed.",
+        confidence_score: 0,
       });
-    },
-    [updateOperationState],
-  );
+    }
+  };
 
-  // تحديث إعدادات التشفير
-  const updateEncryptionSettings = useCallback(
-    (settings: Partial<EncryptionSettings>) => {
-      setEncryptionSettings((prev) => ({ ...prev, ...settings }));
-    },
-    [],
-  );
+  // Core encryption operations
+  const startEncryption = async (
+    disk: DiskInfo,
+    password: string,
+    settings: Partial<EncryptionSettings> = {},
+  ) => {
+    if (!disk || encryptionState.isRunning || !password) return;
+    const finalSettings = { ...encryptionPreferences, ...settings };
 
-  // محاكاة فحص الأقراص
-  const scanDisks = useCallback(async () => {
-    updateOperationState("ai-analysis", {
-      status: "Scanning",
-      message: "فحص الأقراص المتاحة...",
+    updateOperationState("encryption", {
       isRunning: true,
+      status: "Preparing",
       progress: 0,
+      message: `Initializing encryption for ${disk.caption}`,
+      targetDisk: disk.caption,
+      startTime: new Date(),
     });
 
     try {
-      // محاكاة تأخير الفحص
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // بيانات الأقراص المحاكاة
-      const mockDisks: DiskInfo[] = [
-        {
-          caption: "C:",
-          size: 500 * 1024 * 1024 * 1024, // 500GB
-          freeSpace: 200 * 1024 * 1024 * 1024, // 200GB
-          fileSystem: "NTFS",
-          driveType: 3,
-          volumeName: "Windows",
-          description: "Local Fixed Disk",
-          encryptionStatus: "unencrypted",
-          deviceID: "\\\\.\\PHYSICALDRIVE0",
-        },
-        {
-          caption: "D:",
-          size: 1000 * 1024 * 1024 * 1024, // 1TB
-          freeSpace: 800 * 1024 * 1024 * 1024, // 800GB
-          fileSystem: "NTFS",
-          driveType: 3,
-          volumeName: "Data",
-          description: "Local Fixed Disk",
-          encryptionStatus: "unencrypted",
-          deviceID: "\\\\.\\PHYSICALDRIVE1",
-        },
-        {
-          caption: "E:",
-          size: 64 * 1024 * 1024 * 1024, // 64GB
-          freeSpace: 32 * 1024 * 1024 * 1024, // 32GB
-          fileSystem: "FAT32",
-          driveType: 2,
-          volumeName: "USB_DRIVE",
-          description: "Removable Disk",
-          encryptionStatus: "unencrypted",
-          deviceID: "\\\\.\\PHYSICALDRIVE2",
-          mediaType: "Removable",
-        },
-      ];
-
-      updateOperationState("ai-analysis", {
-        status: "Completed",
-        message: `تم العثور على ${mockDisks.length} أقراص`,
-        progress: 100,
-        success: true,
-      });
-
-      setDisks(mockDisks);
-    } catch (error) {
-      updateOperationState("ai-analysis", {
-        status: "Failed",
-        message: "فشل في فحص الأقراص",
-        progress: 0,
-        success: false,
-      });
-    }
-  }, [updateOperationState]);
-
-  // بدء عملية التشفير
-  const startEncryption = useCallback(
-    async (disk: DiskInfo, params: Partial<EncryptionSettings>) => {
-      updateOperationState("encryption", {
-        status: "Preparing",
-        message: `تحضير تشفير القرص ${disk.caption}...`,
-        targetDisk: disk.caption,
-        isRunning: true,
-        progress: 0,
-        startTime: new Date(),
-      });
-
-      try {
-        // محاكاة مراحل التشفير
+      if (window.electronAPI) {
+        await window.electronAPI.invoke("encrypt-drive", {
+          disk: { caption: disk.caption },
+          password: password,
+          algorithm: finalSettings.algorithm,
+          useUsbKey: finalSettings.useUsbKey,
+          usbKeyPath: finalSettings.usbKeyPath,
+          hiddenVolume: finalSettings.hiddenVolume,
+          filesystem: finalSettings.filesystem,
+          quickFormat: finalSettings.quickFormat,
+        });
+      } else {
+        // Mock encryption process for development
         const phases = [
-          { progress: 10, message: "فحص سلامة القرص..." },
-          { progress: 25, message: "إنشاء مفاتيح التشفير..." },
-          { progress: 40, message: "بدء عملية التشفير..." },
-          { progress: 70, message: "تشفير البيانات جاري..." },
-          { progress: 90, message: "التحقق من سلامة التشفير..." },
-          { progress: 100, message: "تم التشفير بنجاح!" },
+          { progress: 10, message: "Checking disk integrity..." },
+          { progress: 25, message: "Creating encryption keys..." },
+          { progress: 50, message: "Starting encryption..." },
+          { progress: 75, message: "Encrypting data..." },
+          { progress: 100, message: "Encryption completed!" },
         ];
 
         for (const phase of phases) {
@@ -347,7 +443,6 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
           });
         }
 
-        // تحديث حالة القرص
         setDisks((prev) =>
           prev.map((d) =>
             d.caption === disk.caption
@@ -358,99 +453,82 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
 
         updateOperationState("encryption", {
           status: "Completed",
-          message: "تم تشفير القرص بنجاح",
+          message: "Disk encrypted successfully",
           progress: 100,
-          success: true,
-        });
-      } catch (error) {
-        updateOperationState("encryption", {
-          status: "Failed",
-          message: "فشل في تشفير القرص",
-          progress: 0,
-          success: false,
         });
       }
-    },
-    [updateOperationState],
-  );
-
-  // بدء عملية فك التشفير
-  const startDecryption = useCallback(
-    async (disk: DiskInfo, password: string) => {
-      updateOperationState("decryption", {
-        status: "Preparing",
-        message: `تحضير فك تشفير القرص ${disk.caption}...`,
+    } catch (error: any) {
+      updateOperationState("encryption", {
+        isRunning: false,
+        status: "Failed",
+        message: `Operation initiation failed: ${error.message}`,
         targetDisk: disk.caption,
-        isRunning: true,
-        progress: 0,
-        startTime: new Date(),
       });
+    }
+  };
 
-      try {
-        const phases = [
-          { progress: 20, message: "التحقق من كلمة المرور..." },
-          { progress: 50, message: "فك تشفير البيانات..." },
-          { progress: 80, message: "استعادة هيكل الملفات..." },
-          { progress: 100, message: "تم فك التشفير بنجاح!" },
-        ];
+  const startDecryption = async (disk: DiskInfo, password: string) => {
+    if (!disk || decryptionState.isRunning || !password) return;
 
-        for (const phase of phases) {
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-          updateOperationState("decryption", {
-            status: "Decrypting",
-            message: phase.message,
-            progress: phase.progress,
-          });
-        }
+    updateOperationState("decryption", {
+      isRunning: true,
+      status: "Preparing",
+      progress: 0,
+      message: `Initializing decryption for ${disk.caption}`,
+      targetDisk: disk.caption,
+      startTime: new Date(),
+    });
 
-        setDisks((prev) =>
-          prev.map((d) =>
-            d.caption === disk.caption
-              ? { ...d, encryptionStatus: "unencrypted" }
-              : d,
-          ),
-        );
-
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.invoke("decrypt-drive", {
+          disk: { caption: disk.caption },
+          password: password,
+        });
+      } else {
+        // Mock decryption for development
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         updateOperationState("decryption", {
           status: "Completed",
-          message: "تم فك تشفير القرص بنجاح",
+          message: "Decryption completed successfully",
           progress: 100,
-          success: true,
-        });
-      } catch (error) {
-        updateOperationState("decryption", {
-          status: "Failed",
-          message: "فشل في فك تشفير القرص",
-          progress: 0,
-          success: false,
         });
       }
-    },
-    [updateOperationState],
-  );
-
-  // تركيب القرص المشفر
-  const mountVolume = useCallback(
-    async (disk: DiskInfo, password: string, driveLetter?: string) => {
-      updateOperationState("mount", {
-        status: "Preparing",
-        message: `تركيب القرص ${disk.caption}...`,
+    } catch (error: any) {
+      updateOperationState("decryption", {
+        isRunning: false,
+        status: "Failed",
+        message: `Decryption initiation failed: ${error.message}`,
         targetDisk: disk.caption,
-        isRunning: true,
-        progress: 0,
       });
+    }
+  };
 
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+  const mountVolume = async (
+    disk: DiskInfo,
+    password: string,
+    driveLetter?: string,
+  ) => {
+    if (!disk || mountState.isRunning || !password) return;
 
-        updateOperationState("mount", {
-          status: "Mounting",
-          message: "جاري تركيب القرص...",
-          progress: 50,
+    updateOperationState("mount", {
+      isRunning: true,
+      status: "Mounting",
+      progress: 0,
+      message: `Mounting ${disk.caption}`,
+      targetDisk: disk.caption,
+    });
+
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.invoke("mount-volume", {
+          disk: { caption: disk.caption },
+          password: password,
+          driveLetter: driveLetter,
         });
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      } else {
+        // Mock mounting for development
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         const assignedLetter =
           driveLetter ||
           `${String.fromCharCode(70 + Math.floor(Math.random() * 10))}:`;
@@ -459,51 +537,44 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
           [assignedLetter]: disk.caption,
         }));
 
-        setDisks((prev) =>
-          prev.map((d) =>
-            d.caption === disk.caption
-              ? { ...d, encryptionStatus: "mounted" }
-              : d,
-          ),
-        );
-
         updateOperationState("mount", {
           status: "Mounted",
-          message: `تم تركيب القرص على ${assignedLetter}`,
+          message: `Volume mounted to ${assignedLetter}`,
           progress: 100,
-          success: true,
-        });
-      } catch (error) {
-        updateOperationState("mount", {
-          status: "Failed",
-          message: "فشل في تركيب القرص",
-          progress: 0,
-          success: false,
         });
       }
-    },
-    [updateOperationState],
-  );
-
-  // إلغاء تركيب القرص
-  const unmountVolume = useCallback(
-    async (disk: DiskInfo) => {
-      updateOperationState("unmount", {
-        status: "Preparing",
-        message: `إلغاء تركيب القرص ${disk.caption}...`,
+    } catch (error: any) {
+      updateOperationState("mount", {
+        isRunning: false,
+        status: "Failed",
+        message: `Mount failed: ${error.message}`,
         targetDisk: disk.caption,
-        isRunning: true,
-        progress: 0,
       });
+    }
+  };
 
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
+  const unmountVolume = async (disk: DiskInfo) => {
+    if (!disk || mountState.isRunning) return;
 
-        // العثور على حرف القرص المركب
+    updateOperationState("unmount", {
+      isRunning: true,
+      status: "Unmounting",
+      progress: 0,
+      message: `Unmounting ${disk.caption}`,
+      targetDisk: disk.caption,
+    });
+
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.invoke("unmount-volume", {
+          disk: { caption: disk.caption, mountLetter: disk.mountLetter },
+        });
+      } else {
+        // Mock unmounting for development
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         const mountedLetter = Object.keys(mountedVolumes).find(
           (letter) => mountedVolumes[letter] === disk.caption,
         );
-
         if (mountedLetter) {
           setMountedVolumes((prev) => {
             const newMounted = { ...prev };
@@ -512,144 +583,173 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
           });
         }
 
-        setDisks((prev) =>
-          prev.map((d) =>
-            d.caption === disk.caption
-              ? { ...d, encryptionStatus: "encrypted" }
-              : d,
-          ),
-        );
-
         updateOperationState("unmount", {
           status: "Unmounted",
-          message: "تم إلغاء تركيب القرص بنجاح",
+          message: "Volume unmounted successfully",
           progress: 100,
-          success: true,
-        });
-      } catch (error) {
-        updateOperationState("unmount", {
-          status: "Failed",
-          message: "فشل في إلغاء تركيب القرص",
-          progress: 0,
-          success: false,
         });
       }
-    },
-    [updateOperationState, mountedVolumes],
-  );
-
-  // الحصول على توصيات الذكاء الاصطناعي
-  const getAIRecommendations = useCallback(
-    async (disk: DiskInfo) => {
-      setIsLoadingAI(true);
-      updateOperationState("ai-analysis", {
-        status: "Analyzing",
-        message: "تحليل القرص بالذكاء الاصطناعي...",
+    } catch (error: any) {
+      updateOperationState("unmount", {
+        isRunning: false,
+        status: "Failed",
+        message: `Unmount failed: ${error.message}`,
         targetDisk: disk.caption,
-        isRunning: true,
-        progress: 0,
       });
+    }
+  };
 
-      try {
-        // محاكاة تحليل الذكاء الاصطناعي
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+  const setEncryptionPreferencesFunc = (prefs: Partial<EncryptionSettings>) => {
+    setEncryptionPreferences((prev) => ({ ...prev, ...prefs }));
+  };
 
-        const diskSizeGB = disk.size / 1024 ** 3;
-        const isSystemDisk = disk.caption === "C:";
-        const isRemovable = disk.driveType === 2;
-
-        let recommendation: AIRecommendation;
-
-        if (isSystemDisk) {
-          recommendation = {
-            algorithm: "AES-Serpent-Twofish",
-            passwordStrengthScore: 95,
-            suggestUsbKey: true,
-            suggestHiddenVolume: true,
-            explanation:
-              "قرص النظام يتطلب أعلى مستوى أمان. ننصح بالتشفير الثلاثي ومفتاح USB.",
-            confidenceScore: 0.92,
-            securityLevel: "military",
-            performanceImpact: "medium",
-          };
-        } else if (isRemovable) {
-          recommendation = {
-            algorithm: "AES-256",
-            passwordStrengthScore: 80,
-            suggestUsbKey: false,
-            suggestHiddenVolume: false,
-            explanation:
-              "للأقراص المحمولة، AES-256 يوفر توازناً جيداً بين الأمان والأداء.",
-            confidenceScore: 0.85,
-            securityLevel: "high",
-            performanceImpact: "low",
-          };
-        } else {
-          recommendation = {
-            algorithm: "Serpent",
-            passwordStrengthScore: 85,
-            suggestUsbKey: diskSizeGB > 500,
-            suggestHiddenVolume: diskSizeGB > 1000,
-            explanation:
-              "لأقراص البيانات الكبيرة، Serpent يوفر أماناً عالياً مع أداء مقبول.",
-            confidenceScore: 0.78,
-            securityLevel: "high",
-            performanceImpact: "medium",
-          };
-        }
-
-        updateOperationState("ai-analysis", {
-          status: "Completed",
-          message: "تم تحليل القرص بنجاح",
-          progress: 100,
-          success: true,
-        });
-
-        setAiRecommendations(recommendation);
-      } catch (error) {
-        updateOperationState("ai-analysis", {
-          status: "Failed",
-          message: "فشل في تحليل القرص",
-          progress: 0,
-          success: false,
-        });
-      } finally {
-        setIsLoadingAI(false);
-      }
-    },
-    [updateOperationState],
-  );
-
-  // فحص الأقراص عند بدء التطبيق
+  // IPC event listeners for real-time updates
   useEffect(() => {
-    scanDisks();
-  }, [scanDisks]);
+    if (!window.electronAPI) return;
+
+    const handleOperationProgress = (event: any, data: any) => {
+      if (data.type === "encryption") updateOperationState("encryption", data);
+      else if (data.type === "decryption")
+        updateOperationState("decryption", data);
+      else if (data.type === "mount" || data.type === "unmount") {
+        updateOperationState("mount", data);
+        // Update mountedVolumes based on mount/unmount results
+        if (data.status === "Mounted" && data.targetDisk && data.mountLetter) {
+          setMountedVolumes((prev) => ({
+            ...prev,
+            [data.mountLetter]: data.targetDisk,
+          }));
+        } else if (data.status === "Unmounted" && data.targetDisk) {
+          setMountedVolumes((prev) => {
+            const newMounted = { ...prev };
+            for (const letter in newMounted) {
+              if (newMounted[letter] === data.targetDisk) {
+                delete newMounted[letter];
+                break;
+              }
+            }
+            return newMounted;
+          });
+        }
+      }
+    };
+
+    const handleAIResult = (event: any, result: any) => {
+      setIsLoadingAI(false);
+      if (result.success) {
+        setAIRecommendations(result.data);
+      } else {
+        console.error("AI Analysis Failed:", result.error);
+        setAIRecommendations({
+          error: result.error,
+          algorithm: "Error",
+          password_strength_score: 0,
+          suggest_usb_key: false,
+          suggest_hidden_volume: false,
+          explanation: "AI analysis failed.",
+          confidence_score: 0,
+        });
+      }
+    };
+
+    const handleDiskStatusUpdate = (event: any, disksData: DiskInfo[]) => {
+      setDisks(disksData);
+    };
+
+    const handleToolStatus = (event: any, data: any) => {
+      console.log("Tool status update:", data);
+    };
+
+    const handleOperationComplete = (event: any, data: any) => {
+      console.log("Operation completed:", data);
+      // Refresh disks after operations complete
+      setTimeout(() => refreshDisks(), 1000);
+    };
+
+    const handleOperationError = (event: any, data: any) => {
+      console.error("Operation error:", data);
+    };
+
+    window.electronAPI.on("operation-progress", handleOperationProgress);
+    window.electronAPI.on("ai-analysis-result", handleAIResult);
+    window.electronAPI.on("disk-status-update", handleDiskStatusUpdate);
+    window.electronAPI.on("tool-status-update", handleToolStatus);
+    window.electronAPI.on("operation-complete", handleOperationComplete);
+    window.electronAPI.on("operation-error", handleOperationError);
+
+    return () => {
+      window.electronAPI.removeListener(
+        "operation-progress",
+        handleOperationProgress,
+      );
+      window.electronAPI.removeListener("ai-analysis-result", handleAIResult);
+      window.electronAPI.removeListener(
+        "disk-status-update",
+        handleDiskStatusUpdate,
+      );
+      window.electronAPI.removeListener("tool-status-update", handleToolStatus);
+      window.electronAPI.removeListener(
+        "operation-complete",
+        handleOperationComplete,
+      );
+      window.electronAPI.removeListener(
+        "operation-error",
+        handleOperationError,
+      );
+    };
+  }, [updateOperationState, mountedVolumes, refreshDisks]);
+
+  // Load system info on context initialization
+  useEffect(() => {
+    loadSystemInfo();
+  }, []);
+
+  // Legacy compatibility methods
+  const scanDisks = refreshDisks;
+  const getAIRecommendations = aiAnalysisForDisk;
 
   const value: SecurityContextType = {
-    // الحالات
+    // Authentication
+    user,
+    isAuthenticated,
+    login,
+    logout,
+
+    // System Info
+    systemInfo,
+    loadSystemInfo,
+
+    // Disk Management
     disks,
     selectedDisk,
-    encryptionSettings,
-    systemContext,
+    setSelectedDisk,
+    refreshDisks,
     mountedVolumes,
+
+    // Operation States
     encryptionState,
     decryptionState,
     mountState,
-    aiAnalysisState,
+
+    // AI State
     aiRecommendations,
     isLoadingAI,
 
-    // الوظائف
-    setSelectedDisk,
-    updateEncryptionSettings,
-    scanDisks,
+    // User Preferences
+    encryptionPreferences,
+    setEncryptionPreferences: setEncryptionPreferencesFunc,
+
+    // Core Methods
     startEncryption,
     startDecryption,
     mountVolume,
     unmountVolume,
+    aiAnalysisForDisk,
+
+    // Legacy compatibility
+    scanDisks,
     getAIRecommendations,
     updateOperationState,
-    resetOperationState,
   };
 
   return (
@@ -659,7 +759,7 @@ export const SecurityProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// Hook لاستخدام Context
+// Hook to use Context
 export const useSecurity = () => {
   const context = useContext(SecurityContext);
   if (context === undefined) {
