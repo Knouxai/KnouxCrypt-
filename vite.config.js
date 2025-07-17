@@ -7,19 +7,7 @@ export default defineConfig({
     port: 3000,
     host: true,
   },
-  build: {
-    outDir: "build",
-    assetsDir: "assets",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ["react", "react-dom"],
-          motion: ["framer-motion"],
-          router: ["react-router-dom"],
-        },
-      },
-    },
-  },
+
   base: "./",
   define: {
     global: "globalThis",
