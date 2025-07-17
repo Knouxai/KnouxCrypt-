@@ -1,339 +1,492 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import GlassCard from "../UI/GlassCard";
 import NeonText from "../UI/NeonText";
 import NeonButton from "../UI/NeonButton";
 import ProgressRing from "../UI/ProgressRing";
-import { useSecurity, AIRecommendation } from "../../context/SecurityContext";
+import { useSecurity } from "../../context/SecurityContext";
 
-const AIRecommendationsCard: React.FC = () => {
+interface AIRecommendationsCardProps {
+  className?: string;
+}
+
+const AIRecommendationsCard: React.FC<AIRecommendationsCardProps> = ({
+  className = "",
+}) => {
   const {
+    selectedDisk,
     aiRecommendations,
     isLoadingAI,
-    selectedDisk,
-    getAIRecommendations,
-    updateEncryptionSettings,
+    aiAnalysisForDisk,
+    encryptionPreferences,
+    setEncryptionPreferences,
   } = useSecurity();
 
-  // تطبيق التوصيات
-  const applyRecommendations = () => {
-    if (!aiRecommendations) return;
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showApplyModal, setShowApplyModal] = useState(false);
 
-    updateEncryptionSettings({
-      algorithm: aiRecommendations.algorithm as any,
-      hashAlgorithm: "SHA-512", // افتراضي
-      quickFormat: false,
-    });
-  };
-
-  // رموز الثقة
-  const getConfidenceIcon = (score: number) => {
-    if (score >= 0.8) return "🟢";
-    if (score >= 0.6) return "🟡";
-    return "🔴";
-  };
-
-  // رموز مستوى الأمان
-  const getSecurityLevelIcon = (level: string) => {
-    switch (level) {
-      case "military":
-        return "🔰";
-      case "high":
-        return "🔒";
-      case "basic":
-        return "🛡️";
-      default:
-        return "⚡";
+  // Handle AI analysis trigger
+  const handleRunAnalysis = () => {
+    if (selectedDisk) {
+      aiAnalysisForDisk(selectedDisk);
     }
   };
 
-  // ألوان مستوى الأمان
-  const getSecurityLevelColor = (level: string) => {
-    switch (level) {
-      case "military":
-        return "text-red-400";
-      case "high":
-        return "text-green-400";
-      case "basic":
-        return "text-blue-400";
-      default:
-        return "text-gray-400";
+  // Apply AI recommendations to user preferences
+  const handleApplyRecommendations = () => {
+    if (aiRecommendations && !aiRecommendations.error) {
+      setEncryptionPreferences({
+        algorithm: aiRecommendations.algorithm,
+        useUsbKey: aiRecommendations.suggest_usb_key,
+        hiddenVolume: aiRecommendations.suggest_hidden_volume,
+        preferredAlgorithms: [
+          aiRecommendations.algorithm,
+          ...encryptionPreferences.preferredAlgorithms.filter(
+            (a) => a !== aiRecommendations.algorithm,
+          ),
+        ],
+      });
+      setShowApplyModal(false);
     }
   };
+
+  // Get security level color and icon
+  const getSecurityLevelInfo = (confidenceScore: number) => {
+    if (confidenceScore >= 0.8) {
+      return {
+        level: "Military",
+        color: "text-red-400",
+        icon: "🛡️",
+        bgColor: "bg-red-500/20",
+      };
+    } else if (confidenceScore >= 0.65) {
+      return {
+        level: "High",
+        color: "text-yellow-400",
+        icon: "🔒",
+        bgColor: "bg-yellow-500/20",
+      };
+    } else {
+      return {
+        level: "Standard",
+        color: "text-blue-400",
+        icon: "🔐",
+        bgColor: "bg-blue-500/20",
+      };
+    }
+  };
+
+  // Get algorithm info
+  const getAlgorithmInfo = (algorithm: string) => {
+    const algorithmData = {
+      "AES-256": {
+        description: "Advanced Encryption Standard - Fast and widely trusted",
+        speed: "Fast",
+        security: "High",
+        icon: "⚡",
+      },
+      Serpent: {
+        description: "High security cipher with conservative design",
+        speed: "Medium",
+        security: "Very High",
+        icon: "🐍",
+      },
+      Twofish: {
+        description: "Balanced cipher with good performance",
+        speed: "Fast",
+        security: "High",
+        icon: "🐟",
+      },
+      "AES-Serpent-Twofish": {
+        description: "Triple cascade encryption for maximum security",
+        speed: "Slow",
+        security: "Maximum",
+        icon: "🔗",
+      },
+    };
+    return (
+      algorithmData[algorithm] || {
+        description: "Unknown algorithm",
+        speed: "Unknown",
+        security: "Unknown",
+        icon: "❓",
+      }
+    );
+  };
+
+  if (!selectedDisk) {
+    return (
+      <GlassCard className={`p-6 ${className}`}>
+        <div className="text-center text-gray-400">
+          <div className="text-4xl mb-4">🤖</div>
+          <NeonText size="normal">تحليل الذكاء الاصطناعي</NeonText>
+          <p className="text-sm mt-2">اختر قرصاً لبدء التحليل</p>
+        </div>
+      </GlassCard>
+    );
+  }
 
   return (
-    <GlassCard className="flex flex-col h-full" padding="medium">
+    <GlassCard className={`p-6 border-purple-500/30 ${className}`}>
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <NeonText size="large" className="text-2xl" gradient>
-          🧠 توصيات الذكاء الاصطناعي
-        </NeonText>
-        <NeonButton
-          size="small"
-          variant="secondary"
-          onClick={() => selectedDisk && getAIRecommendations(selectedDisk)}
-          disabled={!selectedDisk || isLoadingAI}
-          icon="🔄"
+        <div className="flex items-center space-x-3">
+          <div className="text-2xl">🤖</div>
+          <div>
+            <NeonText size="normal" className="text-lg">
+              AI Encryption Analysis
+            </NeonText>
+            <p className="text-gray-400 text-sm">For: {selectedDisk.caption}</p>
+          </div>
+        </div>
+        <motion.button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-400 hover:text-white transition-colors"
+          whileTap={{ scale: 0.95 }}
         >
-          تحليل
-        </NeonButton>
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            ▼
+          </motion.div>
+        </motion.button>
       </div>
 
-      <div className="flex-grow">
-        {/* حالة التحميل */}
-        {isLoadingAI && (
-          <motion.div
-            className="flex flex-col items-center justify-center h-full"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <ProgressRing progress={75} size={80} />
-            <NeonText size="normal" className="mt-4">
-              جاري التحليل...
-            </NeonText>
-            <p className="text-gray-400 text-sm mt-2">تحليل القرص والنظام</p>
-          </motion.div>
-        )}
+      {/* Loading State */}
+      {isLoadingAI && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-8"
+        >
+          <ProgressRing
+            progress={50}
+            size={80}
+            strokeWidth={6}
+            color="#8B5CF6"
+            className="mb-4"
+          />
+          <NeonText size="small" className="text-purple-300">
+            Analyzing disk characteristics...
+          </NeonText>
+          <p className="text-gray-400 text-xs mt-2">
+            This may take a few moments
+          </p>
+        </motion.div>
+      )}
 
-        {/* لا يوجد قرص محدد */}
-        {!selectedDisk && !isLoadingAI && (
-          <motion.div
-            className="flex flex-col items-center justify-center h-full text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+      {/* No Analysis State */}
+      {!isLoadingAI && !aiRecommendations && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-8"
+        >
+          <div className="text-5xl mb-4 opacity-50">🔍</div>
+          <NeonText size="small" className="mb-4">
+            AI Analysis Available
+          </NeonText>
+          <p className="text-gray-400 text-sm mb-6">
+            Get personalized encryption recommendations based on your disk
+            characteristics and system configuration.
+          </p>
+          <NeonButton
+            variant="primary"
+            onClick={handleRunAnalysis}
+            className="mx-auto"
           >
-            <span className="text-6xl mb-4">🤖</span>
-            <NeonText size="normal" className="mb-2">
-              لا يوجد قرص محدد
-            </NeonText>
-            <p className="text-gray-400 text-sm">
-              اختر قرصاً للحصول على توصيات ذكية
-            </p>
-          </motion.div>
-        )}
+            <span className="flex items-center space-x-2">
+              <span>🚀</span>
+              <span>Run AI Analysis</span>
+            </span>
+          </NeonButton>
+        </motion.div>
+      )}
 
-        {/* عرض التوصيات */}
-        {!isLoadingAI && selectedDisk && aiRecommendations && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
+      {/* Error State */}
+      {!isLoadingAI && aiRecommendations?.error && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-8"
+        >
+          <div className="text-5xl mb-4 opacity-50">⚠️</div>
+          <NeonText size="small" className="text-red-400 mb-4">
+            Analysis Failed
+          </NeonText>
+          <p className="text-gray-400 text-sm mb-6">
+            {aiRecommendations.error}
+          </p>
+          <NeonButton
+            variant="secondary"
+            onClick={handleRunAnalysis}
+            className="mx-auto"
           >
-            {/* معلومات القرص المحدد */}
-            <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-              <h4 className="text-gray-300 font-medium mb-2">القرص المحلل:</h4>
-              <p className="text-white font-bold">
-                {selectedDisk.caption} ({selectedDisk.volumeName || "بدون اسم"})
-              </p>
-              <p className="text-gray-400 text-sm">
-                {selectedDisk.fileSystem} -{" "}
-                {(selectedDisk.size / 1024 ** 3).toFixed(1)} GB
-              </p>
+            <span className="flex items-center space-x-2">
+              <span>🔄</span>
+              <span>Retry Analysis</span>
+            </span>
+          </NeonButton>
+        </motion.div>
+      )}
+
+      {/* Recommendations Display */}
+      {!isLoadingAI && aiRecommendations && !aiRecommendations.error && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          {/* Confidence Score */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <ProgressRing
+                progress={Math.round(aiRecommendations.confidence_score * 100)}
+                size={50}
+                strokeWidth={4}
+                color="#10B981"
+              />
+              <div>
+                <NeonText size="small" className="text-green-400">
+                  {Math.round(aiRecommendations.confidence_score * 100)}%
+                  Confidence
+                </NeonText>
+                <p className="text-gray-400 text-xs">
+                  {
+                    getSecurityLevelInfo(aiRecommendations.confidence_score)
+                      .level
+                  }{" "}
+                  Security Level
+                </p>
+              </div>
             </div>
+            <div
+              className={`px-3 py-1 rounded-full ${getSecurityLevelInfo(aiRecommendations.confidence_score).bgColor}`}
+            >
+              <span className="text-sm">
+                {getSecurityLevelInfo(aiRecommendations.confidence_score).icon}
+                {getSecurityLevelInfo(aiRecommendations.confidence_score).level}
+              </span>
+            </div>
+          </div>
 
-            {/* نتائج التحليل */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* الخوارزمية المقترحة */}
-              <div className="p-4 bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-400/30 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <span className="text-2xl mr-2">🔐</span>
-                  <h5 className="text-gray-300 font-medium">الخوارزمية</h5>
-                </div>
-                <p className="text-white font-bold text-lg">
+          {/* Algorithm Recommendation */}
+          <div className="glass-morphism p-4 rounded-lg border border-gray-700">
+            <div className="flex items-center space-x-3 mb-2">
+              <span className="text-2xl">
+                {getAlgorithmInfo(aiRecommendations.algorithm).icon}
+              </span>
+              <div>
+                <NeonText size="small" className="text-blue-300">
+                  Recommended Algorithm
+                </NeonText>
+                <p className="text-white font-medium">
                   {aiRecommendations.algorithm}
                 </p>
               </div>
-
-              {/* قوة كلمة المرور */}
-              <div className="p-4 bg-gradient-to-br from-green-500/20 to-teal-500/20 border border-green-400/30 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <span className="text-2xl mr-2">🔑</span>
-                  <h5 className="text-gray-300 font-medium">قوة كلمة المرور</h5>
-                </div>
-                <div className="flex items-center">
-                  <ProgressRing
-                    progress={aiRecommendations.passwordStrengthScore}
-                    size={40}
-                    strokeWidth={4}
-                    color={
-                      aiRecommendations.passwordStrengthScore >= 80
-                        ? "#10B981"
-                        : aiRecommendations.passwordStrengthScore >= 60
-                          ? "#F59E0B"
-                          : "#EF4444"
-                    }
-                    showPercentage={false}
-                  />
-                  <span className="ml-3 text-white font-bold">
-                    {aiRecommendations.passwordStrengthScore}%
-                  </span>
-                </div>
-              </div>
-
-              {/* مستوى الأمان */}
-              <div className="p-4 bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-400/30 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <span className="text-2xl mr-2">
-                    {getSecurityLevelIcon(aiRecommendations.securityLevel)}
-                  </span>
-                  <h5 className="text-gray-300 font-medium">مستوى الأمان</h5>
-                </div>
-                <p
-                  className={`font-bold text-lg ${getSecurityLevelColor(aiRecommendations.securityLevel)}`}
-                >
-                  {aiRecommendations.securityLevel === "military"
-                    ? "عسكري"
-                    : aiRecommendations.securityLevel === "high"
-                      ? "عالي"
-                      : aiRecommendations.securityLevel === "basic"
-                        ? "أساسي"
-                        : "غير معروف"}
-                </p>
-              </div>
-
-              {/* ثقة الذكاء الاصطناعي */}
-              <div className="p-4 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-400/30 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <span className="text-2xl mr-2">
-                    {getConfidenceIcon(aiRecommendations.confidenceScore)}
-                  </span>
-                  <h5 className="text-gray-300 font-medium">ثقة AI</h5>
-                </div>
-                <p className="text-white font-bold text-lg">
-                  {Math.round(aiRecommendations.confidenceScore * 100)}%
-                </p>
-              </div>
             </div>
-
-            {/* التوصيات الإضافية */}
-            <div className="space-y-3">
-              {aiRecommendations.suggestUsbKey && (
-                <motion.div
-                  className="p-3 bg-blue-500/10 border border-blue-400/30 rounded-lg flex items-center"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <span className="text-xl mr-3">💾</span>
-                  <div>
-                    <p className="text-blue-300 font-medium">
-                      مفتاح USB موصى به
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      استخدم مفتاح USB لحماية إضافية
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {aiRecommendations.suggestHiddenVolume && (
-                <motion.div
-                  className="p-3 bg-purple-500/10 border border-purple-400/30 rounded-lg flex items-center"
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <span className="text-xl mr-3">👁️‍🗨️</span>
-                  <div>
-                    <p className="text-purple-300 font-medium">حجم مخفي</p>
-                    <p className="text-gray-400 text-sm">
-                      إنشاء حجم مخفي لخصوصية إضافية
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {aiRecommendations.performanceImpact && (
-                <motion.div
-                  className={`p-3 rounded-lg flex items-center ${
-                    aiRecommendations.performanceImpact === "low"
-                      ? "bg-green-500/10 border-green-400/30"
-                      : aiRecommendations.performanceImpact === "medium"
-                        ? "bg-yellow-500/10 border-yellow-400/30"
-                        : "bg-red-500/10 border-red-400/30"
-                  }`}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <span className="text-xl mr-3">⚡</span>
-                  <div>
-                    <p
-                      className={`font-medium ${
-                        aiRecommendations.performanceImpact === "low"
-                          ? "text-green-300"
-                          : aiRecommendations.performanceImpact === "medium"
-                            ? "text-yellow-300"
-                            : "text-red-300"
-                      }`}
-                    >
-                      تأثير الأداء:{" "}
-                      {aiRecommendations.performanceImpact === "low"
-                        ? "منخفض"
-                        : aiRecommendations.performanceImpact === "medium"
-                          ? "متوسط"
-                          : "عالي"}
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      التأثير المتوقع على سرعة النظام
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* شرح التوصيات */}
-            <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-              <h5 className="text-gray-300 font-medium mb-2 flex items-center">
-                <span className="text-xl mr-2">💡</span>
-                تفسير التوصيات
-              </h5>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                {aiRecommendations.explanation}
-              </p>
-            </div>
-
-            {/* أزرار العمل */}
-            <div className="flex space-x-3 space-x-reverse">
-              <NeonButton onClick={applyRecommendations} icon="✅" fullWidth>
-                تطبيق التوصيات
-              </NeonButton>
-              <NeonButton
-                onClick={() =>
-                  selectedDisk && getAIRecommendations(selectedDisk)
-                }
-                variant="secondary"
-                icon="🔄"
-                fullWidth
-              >
-                تحليل مجدداً
-              </NeonButton>
-            </div>
-          </motion.div>
-        )}
-
-        {/* لا توجد توصيات */}
-        {!isLoadingAI && selectedDisk && !aiRecommendations && (
-          <motion.div
-            className="flex flex-col items-center justify-center h-full text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <span className="text-6xl mb-4">🤔</span>
-            <NeonText size="normal" className="mb-2">
-              لا توجد توصيات
-            </NeonText>
-            <p className="text-gray-400 text-sm mb-4">
-              اضغط على "تحليل" للحصول على توصيات ذكية
+            <p className="text-gray-400 text-sm mb-3">
+              {getAlgorithmInfo(aiRecommendations.algorithm).description}
             </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="text-center p-2 bg-gray-800/50 rounded">
+                <p className="text-xs text-gray-400">Speed</p>
+                <p className="text-sm text-white">
+                  {getAlgorithmInfo(aiRecommendations.algorithm).speed}
+                </p>
+              </div>
+              <div className="text-center p-2 bg-gray-800/50 rounded">
+                <p className="text-xs text-gray-400">Security</p>
+                <p className="text-sm text-white">
+                  {getAlgorithmInfo(aiRecommendations.algorithm).security}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Password Strength */}
+          <div className="glass-morphism p-4 rounded-lg border border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <NeonText size="small" className="text-yellow-300">
+                Password Strength Score
+              </NeonText>
+              <span className="text-white font-bold text-lg">
+                {aiRecommendations.password_strength_score}/100
+              </span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <motion.div
+                className="bg-gradient-to-r from-yellow-500 to-green-500 h-2 rounded-full"
+                initial={{ width: 0 }}
+                animate={{
+                  width: `${aiRecommendations.password_strength_score}%`,
+                }}
+                transition={{ duration: 1, delay: 0.5 }}
+              />
+            </div>
+          </div>
+
+          {/* Additional Recommendations */}
+          <div className="space-y-3">
+            {aiRecommendations.suggest_usb_key && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex items-center space-x-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg"
+              >
+                <span className="text-2xl">🔑</span>
+                <div>
+                  <p className="text-blue-300 font-medium">
+                    USB Key Recommended
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    Use an additional USB key for enhanced security
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {aiRecommendations.suggest_hidden_volume && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-center space-x-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg"
+              >
+                <span className="text-2xl">👁️‍🗨️</span>
+                <div>
+                  <p className="text-purple-300 font-medium">
+                    Hidden Volume Suggested
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    Consider creating a hidden volume for additional privacy
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Explanation */}
+          <AnimatePresence>
+            {isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="glass-morphism p-4 rounded-lg border border-gray-700"
+              >
+                <NeonText size="small" className="text-gray-300 mb-2">
+                  AI Explanation
+                </NeonText>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {aiRecommendations.explanation}
+                </p>
+                {aiRecommendations.ai_run_time_ms && (
+                  <p className="text-gray-500 text-xs mt-2">
+                    Analysis completed in {aiRecommendations.ai_run_time_ms}ms
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Action Buttons */}
+          <div className="flex space-x-3 pt-4">
             <NeonButton
-              onClick={() => selectedDisk && getAIRecommendations(selectedDisk)}
-              icon="🧠"
+              variant="primary"
+              onClick={() => setShowApplyModal(true)}
+              className="flex-1"
             >
-              بدء التحليل
+              <span className="flex items-center justify-center space-x-2">
+                <span>✓</span>
+                <span>Apply Recommendations</span>
+              </span>
             </NeonButton>
+            <NeonButton variant="secondary" onClick={handleRunAnalysis}>
+              <span className="flex items-center space-x-2">
+                <span>🔄</span>
+                <span>Re-analyze</span>
+              </span>
+            </NeonButton>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Apply Recommendations Modal */}
+      <AnimatePresence>
+        {showApplyModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            onClick={() => setShowApplyModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-900 border border-purple-500/30 rounded-lg p-6 max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-3">⚙️</div>
+                <NeonText size="normal" className="text-lg mb-2">
+                  Apply AI Recommendations?
+                </NeonText>
+                <p className="text-gray-400 text-sm">
+                  This will update your encryption preferences with the
+                  AI-recommended settings.
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between items-center p-3 bg-gray-800/50 rounded">
+                  <span className="text-gray-300">Algorithm:</span>
+                  <span className="text-white font-medium">
+                    {aiRecommendations?.algorithm}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-800/50 rounded">
+                  <span className="text-gray-300">USB Key:</span>
+                  <span className="text-white font-medium">
+                    {aiRecommendations?.suggest_usb_key
+                      ? "Enabled"
+                      : "Disabled"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-gray-800/50 rounded">
+                  <span className="text-gray-300">Hidden Volume:</span>
+                  <span className="text-white font-medium">
+                    {aiRecommendations?.suggest_hidden_volume
+                      ? "Enabled"
+                      : "Disabled"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex space-x-3">
+                <NeonButton
+                  variant="secondary"
+                  onClick={() => setShowApplyModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </NeonButton>
+                <NeonButton
+                  variant="primary"
+                  onClick={handleApplyRecommendations}
+                  className="flex-1"
+                >
+                  Apply Settings
+                </NeonButton>
+              </div>
+            </motion.div>
           </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </GlassCard>
   );
 };
