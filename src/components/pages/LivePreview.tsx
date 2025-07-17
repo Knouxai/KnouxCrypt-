@@ -151,6 +151,55 @@ const LivePreview: React.FC = () => {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {!isCollapsed && (
+                <div className="mb-6 p-4 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl border border-white/10">
+                  <h3 className="text-sm font-semibold text-white mb-3">
+                    نظرة عامة على النظام
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">CPU الإجمالي</span>
+                        <span className="text-white font-medium">
+                          {systemMetrics.totalCPU}%
+                        </span>
+                      </div>
+                      <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${systemMetrics.totalCPU}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-300">الذاكرة</span>
+                        <span className="text-white font-medium">
+                          {systemMetrics.totalMemory}%
+                        </span>
+                      </div>
+                      <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-purple-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${systemMetrics.totalMemory}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-gray-300">
+                        {systemMetrics.activeServices}/
+                        {systemMetrics.totalServices} خدمة نشطة
+                      </span>
+                    </div>
+                    <div className="text-xs text-green-400 font-medium">
+                      صحة النظام: {systemMetrics.systemHealth}%
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!isCollapsed && (
                 <div className="mb-4">
                   <div className="text-xs text-gray-400 mb-2">
                     خدمات التشفير
@@ -427,7 +476,7 @@ const LivePreview: React.FC = () => {
                 <div className="h-16 bg-gradient-to-r from-gray-800/80 to-gray-700/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-6">
                   <div className="flex items-center gap-4">
                     <h2 className="text-lg font-semibold">
-                      عرض مباشر - {currentService.name}
+                      عرض مباش�� - {currentService.name}
                     </h2>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
