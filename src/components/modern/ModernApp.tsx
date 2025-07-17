@@ -63,6 +63,7 @@ export const ModernApp: React.FC = () => {
                     element={<ThreatDetectionPage />}
                   />
                   <Route path="/crypto-test" element={<CryptoTest />} />
+                  <Route path="/live-preview" element={<LivePreview />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/logs" element={<LogsPage />} />
                 </Routes>
@@ -94,7 +95,7 @@ const AnalyticsPage: React.FC = () => (
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 glass-card p-6">
-        <h2 className="text-xl font-bold text-white mb-4">مخطط الأداء</h2>
+        <h2 className="text-xl font-bold text-white mb-4">مخطط ��لأداء</h2>
         <div className="h-64 bg-white/5 rounded-xl flex items-center justify-center">
           <div className="text-center text-white/50">
             <div className="text-4xl mb-2">📈</div>
@@ -159,7 +160,7 @@ const EncryptPage: React.FC = () => {
 
   const handleEncrypt = async () => {
     if (!password || password !== confirmPassword) {
-      alert("كلمات المرور غير متطابقة");
+      alert("كلمات المر��ر غير متطابقة");
       return;
     }
 
@@ -198,7 +199,7 @@ const EncryptPage: React.FC = () => {
           🔒 تشفير الملفات
         </h1>
         <p className="text-white/70 text-lg">
-          حماية متقدمة للملفات والمجلدات باستخدام خوارزمي��ت عسكرية
+          حماية متقدمة للملفات والمجلدات باستخدام خوارزميات عسكرية
         </p>
       </div>
 
