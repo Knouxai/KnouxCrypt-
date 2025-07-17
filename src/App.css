@@ -200,7 +200,6 @@ body {
 
 .main-content {
   flex: 1;
-  margin-right: 300px;
   padding: 24px;
   min-height: 100vh;
 }
