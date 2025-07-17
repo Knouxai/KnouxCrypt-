@@ -156,7 +156,14 @@ const LivePreview: React.FC = () => {
                     خدمات التشفير
                   </div>
                   {services
-                    .filter((s) => s.type === "encryption")
+                    .filter((s) =>
+                      [
+                        "aes-cipher",
+                        "serpent-cipher",
+                        "twofish-cipher",
+                        "triple-cipher",
+                      ].includes(s.id),
+                    )
                     .map((service) => (
                       <motion.div
                         key={service.id}
@@ -169,7 +176,7 @@ const LivePreview: React.FC = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">
                             {service.name}
                           </span>
@@ -179,6 +186,10 @@ const LivePreview: React.FC = () => {
                               backgroundColor: getStatusColor(service.status),
                             }}
                           ></div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>CPU: {service.cpu}%</span>
+                          <span>{getStatusText(service.status)}</span>
                         </div>
                       </motion.div>
                     ))}
@@ -191,7 +202,9 @@ const LivePreview: React.FC = () => {
                     خدمات التحليل
                   </div>
                   {services
-                    .filter((s) => s.type === "analysis")
+                    .filter((s) =>
+                      ["system-analyzer", "ai-assistant"].includes(s.id),
+                    )
                     .map((service) => (
                       <motion.div
                         key={service.id}
@@ -204,7 +217,7 @@ const LivePreview: React.FC = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium">
                             {service.name}
                           </span>
@@ -214,6 +227,10 @@ const LivePreview: React.FC = () => {
                               backgroundColor: getStatusColor(service.status),
                             }}
                           ></div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>CPU: {service.cpu}%</span>
+                          <span>{getStatusText(service.status)}</span>
                         </div>
                       </motion.div>
                     ))}
