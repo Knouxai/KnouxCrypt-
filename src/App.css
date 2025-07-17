@@ -68,7 +68,7 @@ body {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  position: fixed;
+  position: relative;
   z-index: 100;
 }
 
