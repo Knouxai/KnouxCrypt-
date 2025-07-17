@@ -3,6 +3,11 @@
  * واجهة التشفير الموحدة لجميع الخوارزميات
  */
 
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
+
 export interface ICipher {
   /**
    * 🔐 تشفير البيانات
@@ -39,7 +44,7 @@ export interface ICipher {
   readonly rounds: number;
 
   /**
-   * 📊 معلومات الخوارزمية
+   * �� معلومات الخوارزمية
    */
   getInfo(): CipherInfo;
 }
