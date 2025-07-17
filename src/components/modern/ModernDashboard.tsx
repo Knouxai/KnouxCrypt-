@@ -506,6 +506,9 @@ export const ModernDashboard: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* Live Preview Announcement Banner */}
+      <LivePreviewBanner />
+
       {/* Quick Access to Live Preview */}
       <LivePreviewQuickAccess />
     </div>
