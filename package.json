@@ -1,14 +1,23 @@
 {
   "name": "knouxcrypt",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "KnouxCrypt™ - Disk Encryption Dashboard with Glass UI",
-  "main": "index.js",
+  "version": "2025.1.0",
+  "description": "KnouxCrypt™ 2025 - نظام التشفير العسكري المتقدم",
+  "main": "electron/main.js",
+  "homepage": "./",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "vite preview --port 3000"
+    "start": "vite preview --port 3000",
+    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron-build": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "pack": "npm run build && electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [
     "encryption",
@@ -29,8 +38,157 @@
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.1.1",
     "autoprefixer": "^10.4.16",
+    "concurrently": "^8.0.0",
+    "cross-env": "^7.0.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-is-dev": "^2.0.0",
+    "electron-updater": "^6.6.2",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
-    "vite": "^4.5.0"
+    "vite": "^4.5.0",
+    "wait-on": "^7.0.0"
+  },
+  "build": {
+    "appId": "com.knoux.knouxcrypt",
+    "productName": "KnouxCrypt™ 2025",
+    "copyright": "© 2025 Knoux Technologies. All rights reserved.",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/assets",
+        "to": "assets"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.ico",
+      "requestedExecutionLevel": "requireAdministrator",
+      "artifactName": "KnouxCrypt-2025-Setup-${version}-${arch}.${ext}",
+      "publisherName": "Knoux Technologies",
+      "verifyUpdateCodeSignature": false
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.icns",
+      "category": "public.app-category.security",
+      "artifactName": "KnouxCrypt-2025-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.plist"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.png",
+      "category": "Security",
+      "artifactName": "KnouxCrypt-2025-${version}-${arch}.${ext}",
+      "desktop": {
+        "Name": "KnouxCrypt™ 2025",
+        "Comment": "نظام التشفير العسكري المتقدم",
+        "GenericName": "Encryption Software",
+        "Keywords": "encryption;security;crypto;knoux;",
+        "Categories": "Security;Utility;"
+      }
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KnouxCrypt™ 2025",
+      "include": "electron/installer.nsh",
+      "artifactName": "KnouxCrypt-2025-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false,
+      "menuCategory": "Security",
+      "runAfterFinish": true,
+      "installerIcon": "electron/assets/icon.ico",
+      "uninstallerIcon": "electron/assets/icon.ico",
+      "installerHeaderIcon": "electron/assets/icon.ico",
+      "warningsAsErrors": false
+    },
+    "dmg": {
+      "title": "KnouxCrypt™ 2025 Installer",
+      "icon": "electron/assets/icon.icns",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 380,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 110,
+          "y": 280,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "knoux",
+      "repo": "knouxcrypt"
+    }
   }
 }

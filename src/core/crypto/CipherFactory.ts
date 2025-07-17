@@ -12,10 +12,14 @@ import {
   CipherErrorCodes,
   SecureKeyGenerator,
 } from "./ICipher";
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
 import { AESCipher } from "./AESCipher";
 import { SerpentCipher } from "./SerpentCipher";
 import { TwofishCipher } from "./TwofishCipher";
 import { TripleCipher } from "./TripleCipher";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
 
 /**
  * أنواع الخوارزميات المدعومة
@@ -103,7 +107,7 @@ export class CipherFactory {
    */
   static createCipher(
     type: SupportedCipherType,
-    key: Buffer,
+    key: BufferLike,
     requirements?: SecurityRequirements,
   ): ICipher {
     try {
@@ -157,7 +161,7 @@ export class CipherFactory {
    */
   static selectOptimalAlgorithm(
     requirements: SecurityRequirements,
-    key: Buffer,
+    key: BufferLike,
   ): string {
     const { level, performance, dataSize, usagePattern, threatModel } =
       requirements;
@@ -444,7 +448,7 @@ export class CipherFactory {
   /**
    * 🔑 إنشاء مفتاح آمن للخوارزمية المحددة
    */
-  static generateKeyForAlgorithm(algorithm: SupportedCipherType): Buffer {
+  static generateKeyForAlgorithm(algorithm: SupportedCipherType): BufferLike {
     switch (algorithm) {
       case "AES-256":
       case "Serpent":
@@ -485,7 +489,7 @@ export class CipherFactory {
    */
   static validateKey(
     algorithm: SupportedCipherType,
-    key: Buffer,
+    key: BufferLike,
   ): {
     isValid: boolean;
     issues: string[];
@@ -533,7 +537,7 @@ export class CipherFactory {
   // ==================== Helper Methods ====================
 
   private static validateKeySize(
-    key: Buffer,
+    key: BufferLike,
     expectedSize: number,
     algorithm: string,
   ): void {
@@ -559,16 +563,17 @@ export class CipherFactory {
     }
   }
 
-  private static calculateKeyEntropy(key: Buffer): number {
+  private static calculateKeyEntropy(key: BufferLike): number {
     const freq = new Map<number, number>();
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
 
-    for (const byte of key) {
+    for (const byte of keyData) {
       freq.set(byte, (freq.get(byte) || 0) + 1);
     }
 
     let entropy = 0;
     for (const count of freq.values()) {
-      const probability = count / key.length;
+      const probability = count / keyData.length;
       entropy -= probability * Math.log2(probability);
     }
 

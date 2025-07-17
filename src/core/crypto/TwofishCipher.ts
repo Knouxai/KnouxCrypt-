@@ -4,6 +4,10 @@
  */
 
 import { ICipher, CipherInfo, CipherError, CipherErrorCodes } from "./ICipher";
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
 
 export class TwofishCipher implements ICipher {
   public readonly blockSize = 16; // 128 bits
@@ -11,7 +15,7 @@ export class TwofishCipher implements ICipher {
   public readonly algorithmName = "Twofish-256";
   public readonly rounds = 16; // Twofish rounds
 
-  private readonly key: Buffer;
+  private readonly key: BufferLike;
   private readonly sboxKeys: Uint32Array;
   private readonly roundKeys: Uint32Array;
 
@@ -74,7 +78,7 @@ export class TwofishCipher implements ICipher {
     0x55, 0x09, 0xbe, 0x91,
   ]);
 
-  constructor(key: Buffer) {
+  constructor(key: BufferLike) {
     if (key.length !== this.keySize) {
       throw new CipherError(
         `🔑 المفتاح يجب أن يكون ${this.keySize} بايت (256 بت)، المعطى: ${key.length} بايت`,
@@ -83,22 +87,33 @@ export class TwofishCipher implements ICipher {
       );
     }
 
-    this.key = Buffer.from(key);
-    const { sboxKeys, roundKeys } = this.expandKey(key);
+    this.key = key instanceof BufferPolyfill ? key : createBuffer(key);
+    const { sboxKeys, roundKeys } = this.expandKey(this.key);
     this.sboxKeys = sboxKeys;
     this.roundKeys = roundKeys;
   }
 
-  encrypt(data: string | Buffer): Buffer {
+  encrypt(data: string | BufferLike): BufferLike {
     try {
-      const input = typeof data === "string" ? Buffer.from(data, "utf8") : data;
+      const input =
+        typeof data === "string" ? createBuffer(data, "utf8") : data;
       const paddedData = this.addPKCS7Padding(input);
-      const result = Buffer.alloc(paddedData.length);
+      const result = createBuffer(new Uint8Array(paddedData.length));
 
       for (let i = 0; i < paddedData.length; i += this.blockSize) {
-        const block = paddedData.slice(i, i + this.blockSize);
+        const paddedUint8 =
+          paddedData instanceof BufferPolyfill
+            ? paddedData.toUint8Array()
+            : paddedData;
+        const block = createBuffer(paddedUint8.slice(i, i + this.blockSize));
         const encryptedBlock = this.encryptBlock(block);
-        encryptedBlock.copy(result, i);
+        const encryptedUint8 =
+          encryptedBlock instanceof BufferPolyfill
+            ? encryptedBlock.toUint8Array()
+            : encryptedBlock;
+        const resultUint8 =
+          result instanceof BufferPolyfill ? result.toUint8Array() : result;
+        resultUint8.set(encryptedUint8, i);
       }
 
       return result;
@@ -111,18 +126,28 @@ export class TwofishCipher implements ICipher {
     }
   }
 
-  decrypt(encryptedData: Buffer): string {
+  decrypt(encryptedData: BufferLike): string | BufferLike {
     try {
       if (encryptedData.length % this.blockSize !== 0) {
-        throw new Error("حجم البيانات المشفرة يجب أن يكون مضاعف لحجم البلوك");
+        throw new Error("حجم البيانات المشفرة يجب أن يكون مضاعف لحجم الب��وك");
       }
 
-      const result = Buffer.alloc(encryptedData.length);
+      const result = createBuffer(new Uint8Array(encryptedData.length));
 
       for (let i = 0; i < encryptedData.length; i += this.blockSize) {
-        const block = encryptedData.slice(i, i + this.blockSize);
+        const encryptedUint8 =
+          encryptedData instanceof BufferPolyfill
+            ? encryptedData.toUint8Array()
+            : encryptedData;
+        const block = createBuffer(encryptedUint8.slice(i, i + this.blockSize));
         const decryptedBlock = this.decryptBlock(block);
-        decryptedBlock.copy(result, i);
+        const decryptedUint8 =
+          decryptedBlock instanceof BufferPolyfill
+            ? decryptedBlock.toUint8Array()
+            : decryptedBlock;
+        const resultUint8 =
+          result instanceof BufferPolyfill ? result.toUint8Array() : result;
+        resultUint8.set(decryptedUint8, i);
       }
 
       const unpaddedData = this.removePKCS7Padding(result);
@@ -191,14 +216,20 @@ export class TwofishCipher implements ICipher {
   /**
    * توسيع المفتاح
    */
-  private expandKey(key: Buffer): {
+  private expandKey(key: BufferLike): {
     sboxKeys: Uint32Array;
     roundKeys: Uint32Array;
   } {
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
+
     // تقسيم المفتاح إلى أجزاء
     const keyWords = new Uint32Array(8);
     for (let i = 0; i < 8; i++) {
-      keyWords[i] = key.readUInt32LE(i * 4);
+      keyWords[i] =
+        keyData[i * 4] |
+        (keyData[i * 4 + 1] << 8) |
+        (keyData[i * 4 + 2] << 16) |
+        (keyData[i * 4 + 3] << 24);
     }
 
     // إنشاء مفاتيح S-Boxes
@@ -207,7 +238,7 @@ export class TwofishCipher implements ICipher {
       sboxKeys[i] = this.calculateSBoxKey(keyWords, i);
     }
 
-    // إنشاء مفاتيح ��لجولات
+    // ��نشاء مفاتيح الجولات
     const roundKeys = new Uint32Array(40); // 20 round keys × 2
 
     for (let i = 0; i < 20; i++) {
@@ -228,11 +259,29 @@ export class TwofishCipher implements ICipher {
   /**
    * تشفير بلوك واحد
    */
-  private encryptBlock(block: Buffer): Buffer {
-    let A = block.readUInt32LE(0);
-    let B = block.readUInt32LE(4);
-    let C = block.readUInt32LE(8);
-    let D = block.readUInt32LE(12);
+  private encryptBlock(block: BufferLike): BufferLike {
+    const blockData =
+      block instanceof BufferPolyfill ? block.toUint8Array() : block;
+    let A =
+      blockData[0] |
+      (blockData[1] << 8) |
+      (blockData[2] << 16) |
+      (blockData[3] << 24);
+    let B =
+      blockData[4] |
+      (blockData[5] << 8) |
+      (blockData[6] << 16) |
+      (blockData[7] << 24);
+    let C =
+      blockData[8] |
+      (blockData[9] << 8) |
+      (blockData[10] << 16) |
+      (blockData[11] << 24);
+    let D =
+      blockData[12] |
+      (blockData[13] << 8) |
+      (blockData[14] << 16) |
+      (blockData[15] << 24);
 
     // التحويل الأولي
     A ^= this.roundKeys[0];
@@ -261,23 +310,53 @@ export class TwofishCipher implements ICipher {
     A ^= this.roundKeys[6];
     B ^= this.roundKeys[7];
 
-    const result = Buffer.alloc(16);
-    result.writeUInt32LE(C, 0);
-    result.writeUInt32LE(D, 4);
-    result.writeUInt32LE(A, 8);
-    result.writeUInt32LE(B, 12);
+    const result = new Uint8Array(16);
+    result[0] = C & 0xff;
+    result[1] = (C >>> 8) & 0xff;
+    result[2] = (C >>> 16) & 0xff;
+    result[3] = (C >>> 24) & 0xff;
+    result[4] = D & 0xff;
+    result[5] = (D >>> 8) & 0xff;
+    result[6] = (D >>> 16) & 0xff;
+    result[7] = (D >>> 24) & 0xff;
+    result[8] = A & 0xff;
+    result[9] = (A >>> 8) & 0xff;
+    result[10] = (A >>> 16) & 0xff;
+    result[11] = (A >>> 24) & 0xff;
+    result[12] = B & 0xff;
+    result[13] = (B >>> 8) & 0xff;
+    result[14] = (B >>> 16) & 0xff;
+    result[15] = (B >>> 24) & 0xff;
 
-    return result;
+    return createBuffer(result);
   }
 
   /**
    * فك تشفير بلوك واحد
    */
-  private decryptBlock(block: Buffer): Buffer {
-    let A = block.readUInt32LE(0);
-    let B = block.readUInt32LE(4);
-    let C = block.readUInt32LE(8);
-    let D = block.readUInt32LE(12);
+  private decryptBlock(block: BufferLike): BufferLike {
+    const blockData =
+      block instanceof BufferPolyfill ? block.toUint8Array() : block;
+    let A =
+      blockData[0] |
+      (blockData[1] << 8) |
+      (blockData[2] << 16) |
+      (blockData[3] << 24);
+    let B =
+      blockData[4] |
+      (blockData[5] << 8) |
+      (blockData[6] << 16) |
+      (blockData[7] << 24);
+    let C =
+      blockData[8] |
+      (blockData[9] << 8) |
+      (blockData[10] << 16) |
+      (blockData[11] << 24);
+    let D =
+      blockData[12] |
+      (blockData[13] << 8) |
+      (blockData[14] << 16) |
+      (blockData[15] << 24);
 
     // التحويل الأولي العكسي
     A ^= this.roundKeys[4];
@@ -306,13 +385,25 @@ export class TwofishCipher implements ICipher {
     C ^= this.roundKeys[2];
     D ^= this.roundKeys[3];
 
-    const result = Buffer.alloc(16);
-    result.writeUInt32LE(A, 0);
-    result.writeUInt32LE(B, 4);
-    result.writeUInt32LE(C, 8);
-    result.writeUInt32LE(D, 12);
+    const result = new Uint8Array(16);
+    result[0] = A & 0xff;
+    result[1] = (A >>> 8) & 0xff;
+    result[2] = (A >>> 16) & 0xff;
+    result[3] = (A >>> 24) & 0xff;
+    result[4] = B & 0xff;
+    result[5] = (B >>> 8) & 0xff;
+    result[6] = (B >>> 16) & 0xff;
+    result[7] = (B >>> 24) & 0xff;
+    result[8] = C & 0xff;
+    result[9] = (C >>> 8) & 0xff;
+    result[10] = (C >>> 16) & 0xff;
+    result[11] = (C >>> 24) & 0xff;
+    result[12] = D & 0xff;
+    result[13] = (D >>> 8) & 0xff;
+    result[14] = (D >>> 16) & 0xff;
+    result[15] = (D >>> 24) & 0xff;
 
-    return result;
+    return createBuffer(result);
   }
 
   /**
@@ -449,29 +540,40 @@ export class TwofishCipher implements ICipher {
   /**
    * إضافة PKCS7 padding
    */
-  private addPKCS7Padding(data: Buffer): Buffer {
+  private addPKCS7Padding(data: BufferLike): BufferLike {
     const paddingLength = this.blockSize - (data.length % this.blockSize);
-    const padding = Buffer.alloc(paddingLength, paddingLength);
-    return Buffer.concat([data, padding]);
+    const padding = createBuffer(
+      new Uint8Array(paddingLength).fill(paddingLength),
+    );
+    const dataUint8 =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+    const paddingUint8 =
+      padding instanceof BufferPolyfill ? padding.toUint8Array() : padding;
+    const result = new Uint8Array(dataUint8.length + paddingUint8.length);
+    result.set(dataUint8);
+    result.set(paddingUint8, dataUint8.length);
+    return createBuffer(result);
   }
 
   /**
    * إزالة PKCS7 padding
    */
-  private removePKCS7Padding(data: Buffer): Buffer {
-    const paddingLength = data[data.length - 1];
+  private removePKCS7Padding(data: BufferLike): BufferLike {
+    const dataUint8 =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+    const paddingLength = dataUint8[dataUint8.length - 1];
 
     if (paddingLength < 1 || paddingLength > this.blockSize) {
       throw new Error("Padding غير صحيح");
     }
 
     // التحقق من صحة الـ padding
-    for (let i = data.length - paddingLength; i < data.length; i++) {
-      if (data[i] !== paddingLength) {
+    for (let i = dataUint8.length - paddingLength; i < dataUint8.length; i++) {
+      if (dataUint8[i] !== paddingLength) {
         throw new Error("Padding غير صحيح");
       }
     }
 
-    return data.slice(0, data.length - paddingLength);
+    return createBuffer(dataUint8.slice(0, dataUint8.length - paddingLength));
   }
 }

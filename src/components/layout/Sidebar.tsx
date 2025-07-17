@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { LocalAIAssistant } from "../UI/LocalAIAssistant";
 import { NeonButton2025 } from "../UI/NeonButton2025";
+import { AboutDialog } from "../UI/AboutDialog";
 
 interface NavigationItem {
   path: string;
@@ -61,6 +62,7 @@ export const Sidebar: React.FC = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -348,7 +350,7 @@ export const Sidebar: React.FC = () => {
             </div>
 
             {/* AI Assistant Button */}
-            <div className="pt-3 border-t border-white/10">
+            <div className="pt-3 border-t border-white/10 space-y-3">
               <NeonButton2025
                 variant="quantum"
                 size="sm"
@@ -359,6 +361,17 @@ export const Sidebar: React.FC = () => {
                 <span className="mr-2">🧠</span>
                 المساعد الذكي
               </NeonButton2025>
+
+              {/* About Button */}
+              <motion.button
+                className="w-full text-sm p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white transition-all duration-300 flex items-center justify-center gap-2"
+                onClick={() => setIsAboutDialogOpen(true)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span>ℹ️</span>
+                حول البرنامج
+              </motion.button>
             </div>
           </div>
         </div>
@@ -393,6 +406,12 @@ export const Sidebar: React.FC = () => {
       <LocalAIAssistant
         isOpen={isAIAssistantOpen}
         onClose={() => setIsAIAssistantOpen(false)}
+      />
+
+      {/* About Dialog */}
+      <AboutDialog
+        isVisible={isAboutDialogOpen}
+        onClose={() => setIsAboutDialogOpen(false)}
       />
     </motion.div>
   );

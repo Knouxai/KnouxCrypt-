@@ -7,7 +7,35 @@ export default defineConfig({
     port: 3000,
     host: true,
   },
+
+  base: "./",
+  define: {
+    global: "globalThis",
+  },
+  resolve: {
+    alias: {
+      buffer: "buffer",
+    },
+  },
+  optimizeDeps: {
+    include: ["buffer"],
+  },
   build: {
-    outDir: "build/v2",
+    ...{
+      outDir: "build",
+      assetsDir: "assets",
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ["react", "react-dom"],
+            motion: ["framer-motion"],
+            router: ["react-router-dom"],
+          },
+        },
+      },
+    },
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
   },
 });

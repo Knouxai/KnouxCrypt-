@@ -3,20 +3,25 @@
  * واجهة التشفير الموحدة لجميع الخوارزميات
  */
 
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
+
 export interface ICipher {
   /**
    * 🔐 تشفير البيانات
    * @param data البيانات المراد تشفيرها (نص أو Buffer)
    * @returns البيانات المشفرة
    */
-  encrypt(data: string | Buffer): Buffer;
+  encrypt(data: string | BufferLike): BufferLike;
 
   /**
-   * 🔓 فك تشفير البيانات
+   * 🔓 فك تش��ير البيانات
    * @param encryptedData البيانات المشفرة
    * @returns البيانات الأصلية
    */
-  decrypt(encryptedData: Buffer): string | Buffer;
+  decrypt(encryptedData: BufferLike): string | BufferLike;
 
   /**
    * 📏 حجم البلوك بالبايت
@@ -82,13 +87,13 @@ export type CipherType =
   | "ChaCha20";
 
 /**
- * إعدادات التشفير
+ * إعدادا�� التشفير
  */
 export interface EncryptionOptions {
   mode?: "CBC" | "ECB" | "CFB" | "OFB" | "CTR" | "GCM";
   padding?: "PKCS7" | "ANSIX923" | "ISO10126" | "NoPadding";
-  iv?: Buffer;
-  associatedData?: Buffer; // للـ GCM mode
+  iv?: BufferLike;
+  associatedData?: BufferLike; // للـ GCM mode
   tagLength?: number; // للـ GCM mode
 }
 
@@ -96,9 +101,9 @@ export interface EncryptionOptions {
  * نتيجة التشفير مع معلومات إضافية
  */
 export interface EncryptionResult {
-  ciphertext: Buffer;
-  iv?: Buffer;
-  tag?: Buffer; // للـ GCM mode
+  ciphertext: BufferLike;
+  iv?: BufferLike;
+  tag?: BufferLike; // للـ GCM mode
   algorithm: string;
   mode: string;
   timestamp: Date;
@@ -168,7 +173,7 @@ export class KeyValidator {
   /**
    * التحقق من قوة المفتاح
    */
-  static validateKeyStrength(key: Buffer): {
+  static validateKeyStrength(key: BufferLike): {
     isValid: boolean;
     strength: "ضعيف" | "متوسط" | "قوي" | "ممتاز";
     issues: string[];
@@ -210,16 +215,18 @@ export class KeyValidator {
   /**
    * حساب الإنتروبيا (العشوائية)
    */
-  private static calculateEntropy(data: Buffer): number {
+  private static calculateEntropy(data: BufferLike): number {
     const freq = new Map<number, number>();
+    const uint8Data =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
 
-    for (const byte of data) {
+    for (const byte of uint8Data) {
       freq.set(byte, (freq.get(byte) || 0) + 1);
     }
 
     let entropy = 0;
     for (const count of freq.values()) {
-      const probability = count / data.length;
+      const probability = count / uint8Data.length;
       entropy -= probability * Math.log2(probability);
     }
 
@@ -229,17 +236,34 @@ export class KeyValidator {
   /**
    * فحص الأنماط المتكررة
    */
-  private static hasRepeatingPatterns(data: Buffer): boolean {
+  private static hasRepeatingPatterns(data: BufferLike): boolean {
+    const uint8Data =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+
     for (
       let patternSize = 2;
-      patternSize <= Math.min(8, data.length / 4);
+      patternSize <= Math.min(8, uint8Data.length / 4);
       patternSize++
     ) {
-      for (let i = 0; i <= data.length - patternSize * 2; i++) {
-        const pattern = data.slice(i, i + patternSize);
-        const nextPattern = data.slice(i + patternSize, i + patternSize * 2);
-        if (pattern.equals(nextPattern)) {
-          return true;
+      for (let i = 0; i <= uint8Data.length - patternSize * 2; i++) {
+        const pattern = uint8Data.slice(i, i + patternSize);
+        const nextPattern = uint8Data.slice(
+          i + patternSize,
+          i + patternSize * 2,
+        );
+
+        // Compare arrays manually
+        let areEqual = true;
+        if (pattern.length === nextPattern.length) {
+          for (let j = 0; j < pattern.length; j++) {
+            if (pattern[j] !== nextPattern[j]) {
+              areEqual = false;
+              break;
+            }
+          }
+          if (areEqual) {
+            return true;
+          }
         }
       }
     }
@@ -254,23 +278,23 @@ export class SecureKeyGenerator {
   /**
    * إنشاء مفتاح عشوائي آمن
    */
-  static generateSecureKey(size: number = 32): Buffer {
+  static generateSecureKey(size: number = 32): BufferLike {
     if (typeof window !== "undefined" && window.crypto) {
       // في المتصفح
       const key = new Uint8Array(size);
       window.crypto.getRandomValues(key);
-      return Buffer.from(key);
+      return createBuffer(key);
     } else if (typeof require !== "undefined") {
       // في Node.js
       const crypto = require("crypto");
-      return crypto.randomBytes(size);
+      return createBuffer(crypto.randomBytes(size));
     } else {
       // fallback بسيط
       const key = new Uint8Array(size);
       for (let i = 0; i < size; i++) {
         key[i] = Math.floor(Math.random() * 256);
       }
-      return Buffer.from(key);
+      return createBuffer(key);
     }
   }
 
@@ -279,38 +303,49 @@ export class SecureKeyGenerator {
    */
   static deriveKeyFromPassword(
     password: string,
-    salt: Buffer,
+    salt: BufferLike,
     iterations: number = 10000,
     keyLength: number = 32,
-  ): Buffer {
+  ): BufferLike {
     // تنفيذ PBKDF2 مبسط
     // في التطبيق الحقيقي، استخدم مكتبة مخصصة
     if (typeof require !== "undefined") {
       const crypto = require("crypto");
-      return crypto.pbkdf2Sync(password, salt, iterations, keyLength, "sha256");
+      return createBuffer(
+        crypto.pbkdf2Sync(password, salt, iterations, keyLength, "sha256"),
+      );
     }
 
     // Fallback بسيط للمتصفح
-    let key = Buffer.from(password + salt.toString("hex"), "utf8");
+    const saltStr =
+      salt instanceof BufferPolyfill
+        ? salt.toString("hex")
+        : Array.from(salt as Uint8Array)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+    let key = createBuffer(password + saltStr, "utf8");
     for (let i = 0; i < iterations; i++) {
       key = this.simpleHash(key);
     }
-    return key.slice(0, keyLength);
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
+    return createBuffer(keyData.slice(0, keyLength));
   }
 
-  private static simpleHash(data: Buffer): Buffer {
+  private static simpleHash(data: BufferLike): BufferLike {
     // تنفيذ هاش بسيط - في التطبيق الحقيقي استخدم SHA-256
     let hash = 0;
     const result = new Uint8Array(32);
+    const uint8Data =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
 
-    for (let i = 0; i < data.length; i++) {
-      hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
+    for (let i = 0; i < uint8Data.length; i++) {
+      hash = ((hash << 5) - hash + uint8Data[i]) & 0xffffffff;
     }
 
     for (let i = 0; i < 32; i++) {
       result[i] = (hash >>> i % 32) & 0xff;
     }
 
-    return Buffer.from(result);
+    return createBuffer(result);
   }
 }
