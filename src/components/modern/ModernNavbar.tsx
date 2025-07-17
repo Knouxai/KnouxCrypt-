@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CryptoTestButton } from "../UI/CryptoTestButton";
 
 interface UserProfile {
   name: string;
@@ -169,6 +170,9 @@ export const ModernNavbar: React.FC = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
+        {/* Crypto Test Button */}
+        <CryptoTestButton />
+
         {/* System Status */}
         <motion.div
           className="glass-button p-3 flex items-center gap-2"
