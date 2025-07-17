@@ -18,12 +18,14 @@ interface Disk {
 export const DiskManager: React.FC = () => {
   const {
     disks,
-    operations,
     refreshDisks,
-    encryptDisk,
-    decryptDisk,
+    startEncryption,
+    startDecryption,
     mountVolume,
     unmountVolume,
+    encryptionState,
+    decryptionState,
+    mountState,
   } = useSecurity();
   const [selectedDisk, setSelectedDisk] = useState<Disk | null>(null);
   const [showEncryptDialog, setShowEncryptDialog] = useState(false);
