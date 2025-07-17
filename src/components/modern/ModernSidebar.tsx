@@ -109,6 +109,19 @@ export const ModernSidebar: React.FC = () => {
       ],
     },
     {
+      title: "التطوير والاختبار",
+      items: [
+        {
+          path: "/crypto-test",
+          icon: "🧪",
+          label: "مختبر التشفير",
+          description: "اختبار وحدات التشفير",
+          badge: "تجريبي",
+          shortcut: "Ctrl+T",
+        },
+      ],
+    },
+    {
       title: "الإعدادات",
       items: [
         {
