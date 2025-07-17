@@ -14,6 +14,7 @@ import { SystemEncryption } from "../pages/SystemEncryption";
 import { Algorithms } from "../pages/Algorithms";
 import { AIAssistant } from "../pages/AIAssistant";
 import { CryptoTest } from "../pages/CryptoTest";
+import LivePreview from "../pages/LivePreview";
 
 // Import crypto factory for encrypt page
 import { CipherFactory } from "../../core/crypto/CipherFactory";
@@ -197,7 +198,7 @@ const EncryptPage: React.FC = () => {
           🔒 تشفير الملفات
         </h1>
         <p className="text-white/70 text-lg">
-          حماية متقدمة للملفات والمجلدات باستخدام خوارزميات عسكرية
+          حماية متقدمة للملفات والمجلدات باستخدام خوارزمي��ت عسكرية
         </p>
       </div>
 
