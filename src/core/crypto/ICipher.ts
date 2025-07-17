@@ -1,6 +1,6 @@
 /**
  * KnouxCrypt™ - Advanced Encryption Interface
- * وا��هة التشفير الموحدة لجميع الخوارزميات
+ * واجهة التشفير الموحدة لجميع الخوارزميات
  */
 
 import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
@@ -17,7 +17,7 @@ export interface ICipher {
   encrypt(data: string | BufferLike): BufferLike;
 
   /**
-   * 🔓 فك تشفير البيانات
+   * 🔓 فك تش��ير البيانات
    * @param encryptedData البيانات المشفرة
    * @returns البيانات الأصلية
    */
@@ -215,16 +215,18 @@ export class KeyValidator {
   /**
    * حساب الإنتروبيا (العشوائية)
    */
-  private static calculateEntropy(data: Buffer): number {
+  private static calculateEntropy(data: BufferLike): number {
     const freq = new Map<number, number>();
+    const uint8Data =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
 
-    for (const byte of data) {
+    for (const byte of uint8Data) {
       freq.set(byte, (freq.get(byte) || 0) + 1);
     }
 
     let entropy = 0;
     for (const count of freq.values()) {
-      const probability = count / data.length;
+      const probability = count / uint8Data.length;
       entropy -= probability * Math.log2(probability);
     }
 
@@ -234,7 +236,7 @@ export class KeyValidator {
   /**
    * فحص الأنماط المتكررة
    */
-  private static hasRepeatingPatterns(data: Buffer): boolean {
+  private static hasRepeatingPatterns(data: BufferLike): boolean {
     for (
       let patternSize = 2;
       patternSize <= Math.min(8, data.length / 4);
