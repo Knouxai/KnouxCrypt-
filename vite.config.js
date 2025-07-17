@@ -8,8 +8,19 @@ export default defineConfig({
     host: true,
   },
   build: {
-    outDir: "build/v2",
+    outDir: "build",
+    assetsDir: "assets",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          motion: ["framer-motion"],
+          router: ["react-router-dom"],
+        },
+      },
+    },
   },
+  base: "./",
   define: {
     global: "globalThis",
   },
