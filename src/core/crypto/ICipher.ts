@@ -92,8 +92,8 @@ export type CipherType =
 export interface EncryptionOptions {
   mode?: "CBC" | "ECB" | "CFB" | "OFB" | "CTR" | "GCM";
   padding?: "PKCS7" | "ANSIX923" | "ISO10126" | "NoPadding";
-  iv?: Buffer;
-  associatedData?: Buffer; // للـ GCM mode
+  iv?: BufferLike;
+  associatedData?: BufferLike; // للـ GCM mode
   tagLength?: number; // للـ GCM mode
 }
 
@@ -195,7 +195,7 @@ export class KeyValidator {
     // فحص العشوائية
     const entropy = this.calculateEntropy(key);
     if (entropy < 6) {
-      issues.push("المفتاح يفتقر للعشوائية");
+      issues.push("المفتاح يفتقر ل��عشوائية");
       strength = "ضعيف";
     }
 
