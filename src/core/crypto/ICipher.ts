@@ -87,7 +87,7 @@ export type CipherType =
   | "ChaCha20";
 
 /**
- * إعدادات التشفير
+ * إعدادا�� التشفير
  */
 export interface EncryptionOptions {
   mode?: "CBC" | "ECB" | "CFB" | "OFB" | "CTR" | "GCM";
@@ -331,19 +331,21 @@ export class SecureKeyGenerator {
     return createBuffer(keyData.slice(0, keyLength));
   }
 
-  private static simpleHash(data: Buffer): Buffer {
+  private static simpleHash(data: BufferLike): BufferLike {
     // تنفيذ هاش بسيط - في التطبيق الحقيقي استخدم SHA-256
     let hash = 0;
     const result = new Uint8Array(32);
+    const uint8Data =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
 
-    for (let i = 0; i < data.length; i++) {
-      hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
+    for (let i = 0; i < uint8Data.length; i++) {
+      hash = ((hash << 5) - hash + uint8Data[i]) & 0xffffffff;
     }
 
     for (let i = 0; i < 32; i++) {
       result[i] = (hash >>> i % 32) & 0xff;
     }
 
-    return Buffer.from(result);
+    return createBuffer(result);
   }
 }
