@@ -15,6 +15,7 @@ import { Algorithms } from "../pages/Algorithms";
 import { AIAssistant } from "../pages/AIAssistant";
 import { CryptoTest } from "../pages/CryptoTest";
 import LivePreview from "../pages/LivePreview";
+import VMwareInterface from "../pages/VMwareInterface";
 
 // Import crypto factory for encrypt page
 import { CipherFactory } from "../../core/crypto/CipherFactory";
@@ -64,6 +65,7 @@ export const ModernApp: React.FC = () => {
                   />
                   <Route path="/crypto-test" element={<CryptoTest />} />
                   <Route path="/live-preview" element={<LivePreview />} />
+                  <Route path="/vmware" element={<VMwareInterface />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/logs" element={<LogsPage />} />
                 </Routes>
@@ -86,7 +88,7 @@ const AnalyticsPage: React.FC = () => (
   >
     <div className="glass-card-strong p-8">
       <h1 className="text-3xl font-bold text-gradient mb-4">
-        📊 التحليلات المتقدمة
+        📊 التحليلات ��لمتقدمة
       </h1>
       <p className="text-white/70 text-lg">
         إحصائيات وتقارير مفصلة عن نشاط النظام
