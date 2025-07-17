@@ -597,7 +597,8 @@ const LivePreview: React.FC = () => {
                             />
                             <span className="text-lg font-medium">
                               {getStatusText(currentService.status)} - آخر
-                              تحديث: {currentService.lastActivity}
+                              تحديث:{" "}
+                              {formatLastActivity(currentService.lastActivity)}
                             </span>
                           </div>
                         </motion.div>
