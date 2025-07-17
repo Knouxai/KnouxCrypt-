@@ -10,6 +10,10 @@ import {
   CipherError,
   CipherErrorCodes,
 } from "./ICipher";
+import { createBuffer, BufferPolyfill } from "../../utils/buffer-polyfill";
+
+// Browser-compatible Buffer type
+type BufferLike = BufferPolyfill | Uint8Array;
 
 export class AESCipher implements ICipher {
   public readonly blockSize = 16; // 128 bits
@@ -17,7 +21,7 @@ export class AESCipher implements ICipher {
   public readonly algorithmName = "AES-256";
   public readonly rounds = 14; // AES-256 rounds
 
-  private readonly key: Buffer;
+  private readonly key: BufferLike;
   private readonly expandedKey: Uint32Array;
 
   // AES S-Box
@@ -78,7 +82,7 @@ export class AESCipher implements ICipher {
     0xd8, 0xab, 0x4d, 0x9a,
   ]);
 
-  constructor(key: Buffer) {
+  constructor(key: BufferLike) {
     if (key.length !== this.keySize) {
       throw new CipherError(
         `🔑 المفتاح يجب أن يكون ${this.keySize} بايت (256 بت)، المعطى: ${key.length} بايت`,
@@ -87,20 +91,31 @@ export class AESCipher implements ICipher {
       );
     }
 
-    this.key = Buffer.from(key);
-    this.expandedKey = this.expandKey(key);
+    this.key = key instanceof BufferPolyfill ? key : createBuffer(key);
+    this.expandedKey = this.expandKey(this.key);
   }
 
-  encrypt(data: string | Buffer): Buffer {
+  encrypt(data: string | BufferLike): BufferLike {
     try {
-      const input = typeof data === "string" ? Buffer.from(data, "utf8") : data;
+      const input =
+        typeof data === "string" ? createBuffer(data, "utf8") : data;
       const paddedData = this.addPKCS7Padding(input);
-      const result = Buffer.alloc(paddedData.length);
+      const result = createBuffer(new Uint8Array(paddedData.length));
 
       for (let i = 0; i < paddedData.length; i += this.blockSize) {
-        const block = paddedData.slice(i, i + this.blockSize);
+        const blockData =
+          paddedData instanceof BufferPolyfill
+            ? paddedData.toUint8Array()
+            : paddedData;
+        const block = createBuffer(blockData.slice(i, i + this.blockSize));
         const encryptedBlock = this.encryptBlock(block);
-        encryptedBlock.copy(result, i);
+        const encryptedUint8 =
+          encryptedBlock instanceof BufferPolyfill
+            ? encryptedBlock.toUint8Array()
+            : encryptedBlock;
+        const resultUint8 =
+          result instanceof BufferPolyfill ? result.toUint8Array() : result;
+        resultUint8.set(encryptedUint8, i);
       }
 
       return result;
@@ -113,18 +128,28 @@ export class AESCipher implements ICipher {
     }
   }
 
-  decrypt(encryptedData: Buffer): string {
+  decrypt(encryptedData: BufferLike): string | BufferLike {
     try {
       if (encryptedData.length % this.blockSize !== 0) {
         throw new Error("حجم البيانات المشفرة يجب أن يكون مضاعف لحجم البلوك");
       }
 
-      const result = Buffer.alloc(encryptedData.length);
+      const result = createBuffer(new Uint8Array(encryptedData.length));
 
       for (let i = 0; i < encryptedData.length; i += this.blockSize) {
-        const block = encryptedData.slice(i, i + this.blockSize);
+        const encryptedUint8 =
+          encryptedData instanceof BufferPolyfill
+            ? encryptedData.toUint8Array()
+            : encryptedData;
+        const block = createBuffer(encryptedUint8.slice(i, i + this.blockSize));
         const decryptedBlock = this.decryptBlock(block);
-        decryptedBlock.copy(result, i);
+        const decryptedUint8 =
+          decryptedBlock instanceof BufferPolyfill
+            ? decryptedBlock.toUint8Array()
+            : decryptedBlock;
+        const resultUint8 =
+          result instanceof BufferPolyfill ? result.toUint8Array() : result;
+        resultUint8.set(decryptedUint8, i);
       }
 
       const unpaddedData = this.removePKCS7Padding(result);
@@ -142,7 +167,7 @@ export class AESCipher implements ICipher {
     return {
       name: "AES-256",
       description:
-        "Advanced Encryption Standard مع مفتاح 256 بت - المعيار الذهبي للتشفير المت��اثل",
+        "Advanced Encryption Standard مع مفتاح 256 بت - المعيار الذهبي للتشفير المتماثل",
       keySize: this.keySize,
       blockSize: this.blockSize,
       rounds: this.rounds,
@@ -173,10 +198,10 @@ export class AESCipher implements ICipher {
         "يتطلب مولد أرقام عشوائية قوي للـ IV",
       ],
       useCases: [
-        "تشفير الملفات والأق��اص",
+        "تشفير الملفات والأقراص",
         "اتصالات الإنترنت الآمنة (TLS/SSL)",
         "التطبيقات المصرفية والمالية",
-        "الحوسبة السحابية",
+        "الحوسبة السحاب��ة",
         "أنظمة إدارة قواعد البيانات",
         "الاتصالات العسكرية والحكومية",
       ],
@@ -192,16 +217,17 @@ export class AESCipher implements ICipher {
   /**
    * توسيع المفتاح لجميع الجولات
    */
-  private expandKey(key: Buffer): Uint32Array {
+  private expandKey(key: BufferLike): Uint32Array {
     const expandedKey = new Uint32Array(60); // 15 round keys × 4 words
 
     // نسخ المفتاح الأصلي
+    const keyData = key instanceof BufferPolyfill ? key.toUint8Array() : key;
     for (let i = 0; i < 8; i++) {
       expandedKey[i] =
-        (key[i * 4] << 24) |
-        (key[i * 4 + 1] << 16) |
-        (key[i * 4 + 2] << 8) |
-        key[i * 4 + 3];
+        (keyData[i * 4] << 24) |
+        (keyData[i * 4 + 1] << 16) |
+        (keyData[i * 4 + 2] << 8) |
+        keyData[i * 4 + 3];
     }
 
     // توليد مفاتيح الجولات
@@ -223,9 +249,11 @@ export class AESCipher implements ICipher {
   /**
    * تشفير بلوك واحد
    */
-  private encryptBlock(block: Buffer): Buffer {
+  private encryptBlock(block: BufferLike): BufferLike {
     const state = new Uint8Array(16);
-    block.copy(state);
+    const blockData =
+      block instanceof BufferPolyfill ? block.toUint8Array() : block;
+    state.set(blockData);
 
     // الجولة الأولى
     this.addRoundKey(state, 0);
@@ -243,15 +271,17 @@ export class AESCipher implements ICipher {
     this.shiftRows(state);
     this.addRoundKey(state, this.rounds);
 
-    return Buffer.from(state);
+    return createBuffer(state);
   }
 
   /**
    * فك تشفير بلوك واحد
    */
-  private decryptBlock(block: Buffer): Buffer {
+  private decryptBlock(block: BufferLike): BufferLike {
     const state = new Uint8Array(16);
-    block.copy(state);
+    const blockData =
+      block instanceof BufferPolyfill ? block.toUint8Array() : block;
+    state.set(blockData);
 
     // الجولة الأولى (عكسية)
     this.addRoundKey(state, this.rounds);
@@ -269,7 +299,7 @@ export class AESCipher implements ICipher {
     // الجولة الأخيرة (عكسية)
     this.addRoundKey(state, 0);
 
-    return Buffer.from(state);
+    return createBuffer(state);
   }
 
   /**
@@ -318,7 +348,7 @@ export class AESCipher implements ICipher {
     state[9] = state[13];
     state[13] = temp;
 
-    // ال��ف الثالث - إزاحة 2
+    // الصف الثالث - إزاحة 2
     temp = state[2];
     state[2] = state[10];
     state[10] = temp;
@@ -438,7 +468,7 @@ export class AESCipher implements ICipher {
   }
 
   /**
-   * دوران ك��مة
+   * دوران كلمة
    */
   private rotWord(word: number): number {
     return ((word << 8) | (word >>> 24)) & 0xffffffff;
@@ -459,29 +489,40 @@ export class AESCipher implements ICipher {
   /**
    * إضافة PKCS7 padding
    */
-  private addPKCS7Padding(data: Buffer): Buffer {
+  private addPKCS7Padding(data: BufferLike): BufferLike {
     const paddingLength = this.blockSize - (data.length % this.blockSize);
-    const padding = Buffer.alloc(paddingLength, paddingLength);
-    return Buffer.concat([data, padding]);
+    const padding = createBuffer(
+      new Uint8Array(paddingLength).fill(paddingLength),
+    );
+    const dataUint8 =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+    const paddingUint8 =
+      padding instanceof BufferPolyfill ? padding.toUint8Array() : padding;
+    const result = new Uint8Array(dataUint8.length + paddingUint8.length);
+    result.set(dataUint8);
+    result.set(paddingUint8, dataUint8.length);
+    return createBuffer(result);
   }
 
   /**
    * إزالة PKCS7 padding
    */
-  private removePKCS7Padding(data: Buffer): Buffer {
-    const paddingLength = data[data.length - 1];
+  private removePKCS7Padding(data: BufferLike): BufferLike {
+    const dataUint8 =
+      data instanceof BufferPolyfill ? data.toUint8Array() : data;
+    const paddingLength = dataUint8[dataUint8.length - 1];
 
     if (paddingLength < 1 || paddingLength > this.blockSize) {
       throw new Error("Padding غير صحيح");
     }
 
     // التحقق من صحة الـ padding
-    for (let i = data.length - paddingLength; i < data.length; i++) {
-      if (data[i] !== paddingLength) {
+    for (let i = dataUint8.length - paddingLength; i < dataUint8.length; i++) {
+      if (dataUint8[i] !== paddingLength) {
         throw new Error("Padding غير صحيح");
       }
     }
 
-    return data.slice(0, data.length - paddingLength);
+    return createBuffer(dataUint8.slice(0, dataUint8.length - paddingLength));
   }
 }
